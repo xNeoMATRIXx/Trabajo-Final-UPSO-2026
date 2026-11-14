@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Portfolio Devs</title>
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-dot"></span>
+    <span class="brand-text">portfolio<span class="brand-accent">.devs</span></span>
+  </div>
+  <nav class="topbar-nav">
+    <span id="user-chip" class="user-chip hidden"></span>
+    <button id="btn-logout" class="btn btn-ghost hidden">Cerrar sesión</button>
+  </nav>
+</header>
+
+<!-- ===================== AUTH ===================== -->
+<section id="view-auth" class="view auth-view">
+  <div class="auth-card">
+    <div class="auth-tabs">
+      <button class="tab active" data-tab="login">Iniciar sesión</button>
+      <button class="tab" data-tab="register">Registrarse</button>
+    </div>
+
+    <form id="form-login" class="auth-form">
+      <h2>Bienvenido de vuelta</h2>
+      <label>Email<input type="email" name="email" required autocomplete="email" /></label>
+      <label>Contraseña<input type="password" name="password" required autocomplete="current-password" /></label>
+      <button class="btn btn-primary" type="submit">Entrar</button>
+      <p class="muted">Credenciales demo: <code>ana@example.com / password123</code></p>
+    </form>
+
+    <form id="form-register" class="auth-form hidden">
+      <h2>Crea tu portfolio</h2>
+      <label>Email<input type="email" name="email" required /></label>
+      <label>Username<input type="text" name="username" required minlength="3" maxlength="30" pattern="[a-zA-Z0-9_\-]+" /></label>
+      <label>Nombre<input type="text" name="nombre" /></label>
+      <label>Bio<textarea name="bio" rows="2"></textarea></label>
+      <label>Contraseña<input type="password" name="password" required minlength="6" /></label>
+      <button class="btn btn-primary" type="submit">Registrarme</button>
+    </form>
+
+    <p id="auth-msg" class="form-msg"></p>
+  </div>
+
+  <aside class="auth-side">
+    <h1>Un portfolio para desarrolladores que <em>envían</em>.</h1>
+    <ul class="bullets">
+      <li>Gestiona tus habilidades con nivel real.</li>
+      <li>Proyectos con etapas, deadlines y links múltiples.</li>
+      <li>Comparte tu perfil público en <code>/u/tu-username</code>.</li>
+    </ul>
+  </aside>
+</section>
+
+<!-- ===================== PANEL ===================== -->
+<section id="view-panel" class="view panel-view hidden">
+  <aside class="side-panel">
+    <h3>Mi perfil</h3>
+    <p id="panel-username"></p>
+    <p id="panel-email" class="muted small"></p>
+    <a id="panel-public-link" class="btn btn-ghost btn-sm" target="_blank">Ver mi vista pública ↗</a>
+    <hr />
+    <button class="btn btn-danger btn-sm" id="btn-delete-account">Eliminar mi cuenta</button>
+  </aside>
+
+  <main class="panel-main">
+    <!-- Habilidades -->
+    <section class="card">
+      <header class="card-head">
+        <h2>Habilidades técnicas</h2>
+      </header>
+
+      <form id="form-skill" class="inline-form">
+        <select name="tecnologia_id" id="sel-tec" required></select>
+        <select name="nivel" required>
+          <option value="basico">Básico</option>
+          <option value="intermedio">Intermedio</option>
+          <option value="avanzado">Avanzado</option>
+        </select>
+        <button class="btn btn-primary" type="submit">Agregar habilidad</button>
+      </form>
+
+      <ul id="list-skills" class="chip-list"></ul>
+    </section>
+
+    <!-- Proyectos -->
+    <section class="card">
+      <header class="card-head">
+        <h2>Proyectos</h2>
+        <button id="btn-new-project" class="btn btn-primary">+ Nuevo proyecto</button>
+      </header>
+
+      <div id="list-projects" class="projects-grid"></div>
+    </section>
+  </main>
+</section>
+
+<!-- ===================== MODAL PROYECTO ===================== -->
+<div id="modal-project" class="modal hidden">
+  <div class="modal-card">
+    <header class="modal-head">
+      <h3 id="modal-title">Nuevo proyecto</h3>
+      <button class="icon-btn" id="modal-close" aria-label="Cerrar">×</button>
+    </header>
+
+    <form id="form-project" class="stack">
+      <input type="hidden" name="id" />
+
+      <label>Nombre<input name="nombre" required /></label>
+      <label>Descripción<textarea name="descripcion" rows="3"></textarea></label>
+
+      <div class="grid-2">
+        <label>Etapa
+          <select name="etapa" required>
+            <option value="formulacion">Formulación</option>
+            <option value="modelado">Modelado</option>
+            <option value="implementacion">Implementación</option>
+            <option value="testing">Testing</option>
+            <option value="produccion">Producción</option>
+            <option value="mantenimiento">Mantenimiento</option>
+          </select>
+        </label>
+        <label>Deadline<input type="date" name="fecha_deadline" /></label>
+      </div>
+
+      <label>Fecha de finalización (si aplica)<input type="date" name="fecha_finalizacion" /></label>
+
+      <div class="grid-2">
+        <div>
+          <label class="field-label">Lenguajes</label>
+          <div id="chk-lenguajes" class="check-grid"></div>
+        </div>
+        <div>
+          <label class="field-label">Tecnologías</label>
+          <div id="chk-tecnologias" class="check-grid"></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="split-head">
+          <label class="field-label">Links externos</label>
+          <button type="button" class="btn btn-ghost btn-sm" id="btn-add-link">+ Agregar link</button>
+        </div>
+        <div id="list-links" class="links-editor"></div>
+      </div>
+
+      <footer class="modal-foot">
+        <button type="button" id="btn-delete-project" class="btn btn-danger hidden">Eliminar proyecto</button>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+      </footer>
+      <p id="project-msg" class="form-msg"></p>
+    </form>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+<script src="js/main.js"></script>
+</body>
+</html>
