@@ -203,90 +203,117 @@
   "use strict";
   if (!document.getElementById("view-panel")) return;
 
-  const selTec = document.getElementById("sel-tec");
+  const selector = document.getElementById("sel-habilidad");
   const formSkill = document.getElementById("form-skill");
   const list = document.getElementById("list-skills");
+  const addButton = form.querySelector('button[type="submit"]');
 
   const NIVELES = ["basico", "intermedio", "avanzado"];
   let tecnologias = [];
   let habilidades = [];
+  let lenguajes = [];
 
   async function init() {
-    await Promise.all([loadTecnologias(), loadHabilidades()]);
-    render();
-  }
-
-  async function loadTecnologias() {
-    tecnologias = await window.API.get("/tecnologias", { auth: false });
-  }
-
-  async function loadHabilidades() {
-    habilidades = await window.API.get("/habilidades");
+    try {
+      [lenguajes, tecnologias, habilidades] = await Promise.all([
+        window.API.get("/lenguajes", { auth: false }),
+        window.API.get("/tecnologias", { auth: false }),
+        window.API.get("/habilidades"),
+      ]);
+      render();
+    } catch (err) {
+      selector.replaceChildren();
+      addButton.disabled = true;
+      list.textContent = "No se pudieron cargar las habilidades.";
+      window.toast(err.message, "error");
+    }
   }
 
   function render() {
-    // Opciones del select (excluye tecnologías ya cargadas)
-    const yaIds = new Set(habilidades.map(h => h.tecnologia_id));
-    selTec.innerHTML = tecnologias
-      .filter(t => !yaIds.has(t.id))
-      .map(t => `<option value="${t.id}">${t.nombre}</option>`)
-      .join("");
-
-    // Lista de habilidades
-    list.innerHTML = "";
+    const used = new Set(habilidades.map(key));
+    selector.replaceChildren();
+    for (const [tipo, label, items] of [
+      ["lenguaje", "Lenguajes", lenguajes],
+      ["tecnologia", "Tecnologías", tecnologias],
+    ]) {
+      const group = document.createElement("optgroup");
+      group.label = label;
+      for (const item of items) {
+        const value = tipo + ":" + item.id;
+        if (!used.has(value)) group.appendChild(new Option(item.nombre, value));
+      }
+      if (group.children.length) selector.appendChild(group);
+    }
+    addButton.disabled = selector.options.length === 0;
+    list.replaceChildren();
     if (!habilidades.length) {
-      list.innerHTML = '<li class="muted small">Aún no agregaste habilidades.</li>';
+      list.textContent = "Aún no agregaste habilidades.";
       return;
     }
-    habilidades.forEach(h => {
+    for (const h of habilidades) {
       const li = document.createElement("li");
       li.className = "skill-chip";
-      li.innerHTML = `
-        <span>${h.tecnologia}</span>
-        <select data-id="${h.tecnologia_id}">
-          ${NIVELES.map(n => `<option value="${n}" ${n===h.nivel?"selected":""}>${n}</option>`).join("")}
-        </select>
-        <button type="button" class="remove" data-id="${h.tecnologia_id}" aria-label="Eliminar">×</button>
-      `;
+      const name = document.createElement("span");
+      name.textContent = (h.tipo === "lenguaje" ? "Lenguaje: " : "Tecnología: ") + h.nombre;
+      const level = document.createElement("select");
+      level.setAttribute("aria-label", "Nivel de " + h.nombre);
+      for (const value of NIVELES) level.appendChild(new Option(value, value));
+      level.value = h.nivel;
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "remove";
+      remove.textContent = "×";
+      remove.setAttribute("aria-label", "Eliminar " + h.nombre);
+      li.append(name, level, remove);
       list.appendChild(li);
 
-      li.querySelector("select").addEventListener("change", async (e) => {
+      level.addEventListener("change", async () => {
+        const previous = h.nivel;
+        level.disabled = true;
         try {
-          await window.API.put("/habilidades/" + h.tecnologia_id, { nivel: e.target.value });
-          h.nivel = e.target.value;
+          const updated = await window.API.put(path(h), { nivel: level.value });
+          h.nivel = updated.nivel;
           window.toast("Nivel actualizado", "ok");
         } catch (err) {
-          window.toast("Error al actualizar: " + err.message, "error");
+          level.value = previous;
+          window.toast(err.message, "error");
+        } finally {
+          level.disabled = false;
         }
       });
-
-      li.querySelector(".remove").addEventListener("click", async () => {
+      remove.addEventListener("click", async () => {
         if (!confirm("¿Eliminar esta habilidad?")) return;
+        remove.disabled = true;
         try {
-          await window.API.del("/habilidades/" + h.tecnologia_id);
-          habilidades = habilidades.filter(x => x.tecnologia_id !== h.tecnologia_id);
+          await window.API.del(path(h));
+          habilidades = habilidades.filter(item => key(item) !== key(h));
           render();
           window.toast("Habilidad eliminada", "ok");
         } catch (err) {
-          window.toast("Error: " + err.message, "error");
+          remove.disabled = false;
+          window.toast(err.message, "error");
         }
       });
-    });
+    }
   }
 
   formSkill.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const fd = new FormData(formSkill);
+    const [tipo, rawId] = selector.value.split(":");
+    const elementId = Number(rawId);
+    if (!["lenguaje", "tecnologia"].includes(tipo) || !Number.isInteger(elementId) || elementId <= 0) return;
+    addButton.disabled = true;
     try {
       const nueva = await window.API.post("/habilidades", {
-        tecnologia_id: parseInt(fd.get("tecnologia_id"), 10),
-        nivel: fd.get("nivel"),
+        tipo, elemento_id: elementId, nivel: new FormData(form).get("nivel"),
       });
       habilidades.push(nueva);
       render();
       window.toast("Habilidad agregada", "ok");
     } catch (err) {
-      window.toast("Error: " + err.message, "error");
+      window.toast(err.message, "error");
+    } finally {
+      addButton.disabled = selector.options.length === 0;
     }
   });
 
