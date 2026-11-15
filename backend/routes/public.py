@@ -4,7 +4,8 @@ from flask import Blueprint, jsonify
 from models.database import Cursor
 from . import json_object
 from .projects import _find_projects
-from .catalog import TECNOLOGIAS_POR_ID
+from .catalog import get_catalog
+from .skills import skill_to_dict
 
 
 public_bp = Blueprint("public", __name__)
@@ -22,8 +23,8 @@ def public_profile(username):
             return jsonify({"error": "usuario_no_encontrado"}), 404
 
         cursor.execute(
-            "SELECT tecnologia_id, nivel FROM habilidades WHERE usuario_id = %s "
-            "ORDER BY tecnologia_id",
+            "SELECT tipo, elemento_id, nivel FROM habilidades WHERE usuario_id = %s "
+            "ORDER BY tipo, elemento_id",
             (user["id"],),
         )
         skills = cursor.fetchall()
@@ -35,13 +36,6 @@ def public_profile(username):
             "nombre": user["nombre"],
             "bio": user["bio"],
         },
-        "habilidades": [
-            {
-                "tecnologia_id": item["tecnologia_id"],
-                "tecnologia": TECNOLOGIAS_POR_ID[item["tecnologia_id"]]["nombre"],
-                "nivel": item["nivel"],
-            }
-            for item in skills
-        ],
+        "habilidades": [skill_to_dict(item, get_catalog()) for item in skills],
         "proyectos": projects,
     })
