@@ -430,6 +430,9 @@ function showPanel() {
   const listEl = document.getElementById("list-projects");
   const modal = document.getElementById("modal-project");
   const form = document.getElementById("form-project");
+  const btnGuardarProyecto = form.querySelector(
+    'button[type="submit"]'
+  );
   const btnNew = document.getElementById("btn-new-project");
   const btnClose = document.getElementById("modal-close");
   const btnDelete = document.getElementById("btn-delete-project");
@@ -450,6 +453,7 @@ function showPanel() {
   let proyectos = [];
   let lenguajesCat = [];
   let tecnologiasCat = [];
+  let guardandoProyecto = false;
 
   async function init() {
     await Promise.all([loadCatalogos(), loadProyectos()]);
@@ -560,6 +564,8 @@ function showPanel() {
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
+    // Ignorar otro envío mientras hay uno pendiente.
+    if (guardandoProyecto) return;
     const id = form.id.value;
     const payload = {
       nombre: form.nombre.value.trim(),
@@ -582,6 +588,13 @@ function showPanel() {
       msg.className = "form-msg error";
       return;
     }
+    // Bloquear después de superar las validaciones.
+    const textoOriginal = btnGuardarProyecto.textContent;
+
+    guardandoProyecto = true;
+    btnGuardarProyecto.disabled = true;
+    btnGuardarProyecto.textContent = "Guardando...";
+
     msg.textContent = "Guardando..."; 
     msg.className = "form-msg";
     try {
@@ -595,6 +608,11 @@ function showPanel() {
       const det = err.payload && err.payload.detalles;
       msg.textContent = det ? (Array.isArray(det) ? det.join(" · ") : typeof det === "object" ? Object.values(det).join(" · ") : String(det)) : err.message;
       msg.className = "form-msg error";
+    } finally {
+      // Restaurar tanto si salió bien como si hubo un error.
+      guardandoProyecto = false;
+      btnGuardarProyecto.disabled = false;
+      btnGuardarProyecto.textContent = textoOriginal;
     }
   });
 
