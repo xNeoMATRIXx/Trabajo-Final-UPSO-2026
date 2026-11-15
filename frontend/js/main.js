@@ -156,18 +156,111 @@
     return map[m] || m;
   }
 
-  function showPanel() {
+  const formProfile = document.getElementById("form-profile");
+  const profileMsg = document.getElementById("profile-msg");
+
+function renderProfile(user) {
+  userChip.textContent = "@" + user.username;
+
+  document.getElementById("panel-username").textContent =
+    user.nombre || user.username;
+
+  document.getElementById("panel-email").textContent =
+    user.email;
+
+  document.getElementById("panel-public-link").href =
+    "public.html?u=" + encodeURIComponent(user.username);
+
+  for (const field of ["nombre", "username", "email", "bio"]) {
+    formProfile.elements.namedItem(field).value =
+      user[field] ?? "";
+  }
+}
+
+formProfile.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  if (!formProfile.reportValidity()) return;
+
+  const data = new FormData(formProfile);
+  const button = formProfile.querySelector(
+    'button[type="submit"]'
+  );
+
+  button.disabled = true;
+  profileMsg.textContent = "Guardando perfil...";
+  profileMsg.className = "form-msg";
+
+  try {
+    const response = await window.API.put("/auth/me", {
+      email: String(data.get("email") ?? "").trim(),
+      username: String(data.get("username") ?? "").trim(),
+      nombre: String(data.get("nombre") ?? "").trim() || null,
+      bio: String(data.get("bio") ?? "").trim() || null,
+    });
+
+    // Actualizar los datos guardados en el navegador.
+    window.API.setUser(response.user);
+
+    // Actualizar el formulario, el panel y el enlace público.
+    renderProfile(response.user);
+
+    profileMsg.textContent = "Perfil actualizado.";
+    profileMsg.className = "form-msg ok";
+  } catch (err) {
+    const messages = {
+      email_invalido:
+        "Ingresá un email válido de hasta 190 caracteres.",
+      username_invalido:
+        "El username debe tener entre 3 y 30 caracteres: letras, números, _ o -.",
+      nombre_invalido:
+        "El nombre puede tener hasta 120 caracteres.",
+      bio_invalida:
+        "La biografía puede tener hasta 5000 caracteres.",
+      email_ya_registrado:
+        "Ese email pertenece a otra cuenta.",
+      username_ya_usado:
+        "Ese username pertenece a otra cuenta.",
+      email_o_username_ya_utilizado:
+        "El email o username ya está en uso.",
+      usuario_no_encontrado:
+        "La cuenta ya no existe.",
+      token_expired:
+        "La sesión venció. Volvé a iniciar sesión.",
+      token_invalid:
+        "La sesión no es válida. Volvé a iniciar sesión.",
+      auth_required:
+        "Iniciá sesión para guardar el perfil.",
+    };
+
+    profileMsg.textContent =
+      messages[err.message] || err.message;
+
+    profileMsg.className = "form-msg error";
+  } finally {
+    button.disabled = false;
+  }
+});
+
+function showPanel() {
+    const user = window.API.getUser();
+
+    if (!user) {
+      showAuth();
+      return;
+    }
+
     viewAuth.classList.add("hidden");
     viewPanel.classList.remove("hidden");
-    const u = window.API.getUser();
-    userChip.textContent = "@" + u.username;
     userChip.classList.remove("hidden");
     btnLogout.classList.remove("hidden");
-    document.getElementById("panel-username").textContent = (u.nombre || u.username);
-    document.getElementById("panel-email").textContent = u.email;
-    const link = document.getElementById("panel-public-link");
-    link.href = "public.html?u=" + encodeURIComponent(u.username);
-    // Inicializar secciones.
+
+    renderProfile(user);
+
+    profileMsg.textContent = "";
+    profileMsg.className = "form-msg";
+
+    // Inicializar secciones
     window.Skills.init();
     window.Projects.init();
   }
@@ -203,90 +296,125 @@
   "use strict";
   if (!document.getElementById("view-panel")) return;
 
-  const selTec = document.getElementById("sel-tec");
+  const selector = document.getElementById("sel-habilidad");
   const formSkill = document.getElementById("form-skill");
   const list = document.getElementById("list-skills");
+  const addButton = formSkill.querySelector('button[type="submit"]');
 
   const NIVELES = ["basico", "intermedio", "avanzado"];
   let tecnologias = [];
   let habilidades = [];
+  let lenguajes = [];
+
+  function key(h) {
+    return h.tipo + ":" + h.elemento_id;
+  }
+
+  function path(h) {
+    return "/habilidades/" + h.tipo + "/" + h.elemento_id;
+  }
 
   async function init() {
-    await Promise.all([loadTecnologias(), loadHabilidades()]);
-    render();
-  }
-
-  async function loadTecnologias() {
-    tecnologias = await window.API.get("/tecnologias", { auth: false });
-  }
-
-  async function loadHabilidades() {
-    habilidades = await window.API.get("/habilidades");
+    try {
+      [lenguajes, tecnologias, habilidades] = await Promise.all([
+        window.API.get("/lenguajes", { auth: false }),
+        window.API.get("/tecnologias", { auth: false }),
+        window.API.get("/habilidades"),
+      ]);
+      render();
+    } catch (err) {
+      selector.replaceChildren();
+      addButton.disabled = true;
+      list.textContent = "No se pudieron cargar las habilidades.";
+      window.toast(err.message, "error");
+    }
   }
 
   function render() {
-    // Opciones del select (excluye tecnologías ya cargadas)
-    const yaIds = new Set(habilidades.map(h => h.tecnologia_id));
-    selTec.innerHTML = tecnologias
-      .filter(t => !yaIds.has(t.id))
-      .map(t => `<option value="${t.id}">${t.nombre}</option>`)
-      .join("");
-
-    // Lista de habilidades
-    list.innerHTML = "";
+    const used = new Set(habilidades.map(key));
+    selector.replaceChildren();
+    for (const [tipo, label, items] of [
+      ["lenguaje", "Lenguajes", lenguajes],
+      ["tecnologia", "Tecnologías", tecnologias],
+    ]) {
+      const group = document.createElement("optgroup");
+      group.label = label;
+      for (const item of items) {
+        const value = tipo + ":" + item.id;
+        if (!used.has(value)) group.appendChild(new Option(item.nombre, value));
+      }
+      if (group.children.length) selector.appendChild(group);
+    }
+    addButton.disabled = selector.options.length === 0;
+    list.replaceChildren();
     if (!habilidades.length) {
-      list.innerHTML = '<li class="muted small">Aún no agregaste habilidades.</li>';
+      list.textContent = "Aún no agregaste habilidades.";
       return;
     }
-    habilidades.forEach(h => {
+    for (const h of habilidades) {
       const li = document.createElement("li");
       li.className = "skill-chip";
-      li.innerHTML = `
-        <span>${h.tecnologia}</span>
-        <select data-id="${h.tecnologia_id}">
-          ${NIVELES.map(n => `<option value="${n}" ${n===h.nivel?"selected":""}>${n}</option>`).join("")}
-        </select>
-        <button type="button" class="remove" data-id="${h.tecnologia_id}" aria-label="Eliminar">×</button>
-      `;
+      const name = document.createElement("span");
+      name.textContent = (h.tipo === "lenguaje" ? "Lenguaje: " : "Tecnología: ") + h.nombre;
+      const level = document.createElement("select");
+      level.setAttribute("aria-label", "Nivel de " + h.nombre);
+      for (const value of NIVELES) level.appendChild(new Option(value, value));
+      level.value = h.nivel;
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "remove";
+      remove.textContent = "×";
+      remove.setAttribute("aria-label", "Eliminar " + h.nombre);
+      li.append(name, level, remove);
       list.appendChild(li);
 
-      li.querySelector("select").addEventListener("change", async (e) => {
+      level.addEventListener("change", async () => {
+        const previous = h.nivel;
+        level.disabled = true;
         try {
-          await window.API.put("/habilidades/" + h.tecnologia_id, { nivel: e.target.value });
-          h.nivel = e.target.value;
+          const updated = await window.API.put(path(h), { nivel: level.value });
+          h.nivel = updated.nivel;
           window.toast("Nivel actualizado", "ok");
         } catch (err) {
-          window.toast("Error al actualizar: " + err.message, "error");
+          level.value = previous;
+          window.toast(err.message, "error");
+        } finally {
+          level.disabled = false;
         }
       });
-
-      li.querySelector(".remove").addEventListener("click", async () => {
+      remove.addEventListener("click", async () => {
         if (!confirm("¿Eliminar esta habilidad?")) return;
+        remove.disabled = true;
         try {
-          await window.API.del("/habilidades/" + h.tecnologia_id);
-          habilidades = habilidades.filter(x => x.tecnologia_id !== h.tecnologia_id);
+          await window.API.del(path(h));
+          habilidades = habilidades.filter(item => key(item) !== key(h));
           render();
           window.toast("Habilidad eliminada", "ok");
         } catch (err) {
-          window.toast("Error: " + err.message, "error");
+          remove.disabled = false;
+          window.toast(err.message, "error");
         }
       });
-    });
+    }
   }
 
   formSkill.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const fd = new FormData(formSkill);
+    const [tipo, rawId] = selector.value.split(":");
+    const elementId = Number(rawId);
+    if (!["lenguaje", "tecnologia"].includes(tipo) || !Number.isInteger(elementId) || elementId <= 0) return;
+    addButton.disabled = true;
     try {
       const nueva = await window.API.post("/habilidades", {
-        tecnologia_id: parseInt(fd.get("tecnologia_id"), 10),
-        nivel: fd.get("nivel"),
+        tipo, elemento_id: elementId, nivel: new FormData(formSkill).get("nivel"),
       });
       habilidades.push(nueva);
       render();
       window.toast("Habilidad agregada", "ok");
     } catch (err) {
-      window.toast("Error: " + err.message, "error");
+      window.toast(err.message, "error");
+    } finally {
+      addButton.disabled = selector.options.length === 0;
     }
   });
 
@@ -302,6 +430,9 @@
   const listEl = document.getElementById("list-projects");
   const modal = document.getElementById("modal-project");
   const form = document.getElementById("form-project");
+  const btnGuardarProyecto = form.querySelector(
+    'button[type="submit"]'
+  );
   const btnNew = document.getElementById("btn-new-project");
   const btnClose = document.getElementById("modal-close");
   const btnDelete = document.getElementById("btn-delete-project");
@@ -322,6 +453,7 @@
   let proyectos = [];
   let lenguajesCat = [];
   let tecnologiasCat = [];
+  let guardandoProyecto = false;
 
   async function init() {
     await Promise.all([loadCatalogos(), loadProyectos()]);
@@ -432,6 +564,8 @@
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
+    // Ignorar otro envío mientras hay uno pendiente.
+    if (guardandoProyecto) return;
     const id = form.id.value;
     const payload = {
       nombre: form.nombre.value.trim(),
@@ -443,7 +577,26 @@
       tecnologias: collectChecked(chkTec),
       links: collectLinks(),
     };
-    msg.textContent = "Guardando..."; msg.className = "form-msg";
+    if (payload.lenguajes.length === 0) {
+      msg.textContent = "Seleccioná al menos un lenguaje para el proyecto.";
+      msg.className = "form-msg error";
+      return;
+    }
+
+    if (payload.tecnologias.length === 0) {
+      msg.textContent = "Seleccioná al menos una tecnología para el proyecto.";
+      msg.className = "form-msg error";
+      return;
+    }
+    // Bloquear después de superar las validaciones.
+    const textoOriginal = btnGuardarProyecto.textContent;
+
+    guardandoProyecto = true;
+    btnGuardarProyecto.disabled = true;
+    btnGuardarProyecto.textContent = "Guardando...";
+
+    msg.textContent = "Guardando..."; 
+    msg.className = "form-msg";
     try {
       if (id) await window.API.put("/proyectos/" + id, payload);
       else await window.API.post("/proyectos", payload);
@@ -455,6 +608,11 @@
       const det = err.payload && err.payload.detalles;
       msg.textContent = det ? (Array.isArray(det) ? det.join(" · ") : typeof det === "object" ? Object.values(det).join(" · ") : String(det)) : err.message;
       msg.className = "form-msg error";
+    } finally {
+      // Restaurar tanto si salió bien como si hubo un error.
+      guardandoProyecto = false;
+      btnGuardarProyecto.disabled = false;
+      btnGuardarProyecto.textContent = textoOriginal;
     }
   });
 
@@ -509,7 +667,40 @@
 
   function fmtDate(iso) {
     if (!iso) return "—";
-    try { return new Date(iso).toLocaleDateString("es-ES", { year: "numeric", month: "short", day: "numeric" }); }
+    try { 
+      const text = String(iso).trim();
+
+      // Detectar fechas sin hora: YYYY-MM-DD.
+      const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(text);
+
+      const date = new Date(
+        dateOnly ? `${text}T00:00:00Z` : text
+      );
+
+      // Evitar mostrar fechas inválidas.
+      if (Number.isNaN(date.getTime())) return "—";
+
+      // Rechazar días inexistentes que JavaScript haya normalizado.
+      if (
+        dateOnly &&
+        date.toISOString().slice(0, 10) !== text
+      ) {
+        return "—";
+      }
+
+      const options = {
+        year: "numeric",
+        month: "short",
+        day: "numeric"
+      };
+
+      // Para fechas sin hora, conservar el día original.
+      if (dateOnly) {
+        options.timeZone = "UTC";
+      }
+
+      return date.toLocaleDateString("es-ES", options);
+    }
     catch (e) { return iso; }
   }
 
@@ -551,7 +742,7 @@
         ${habilidades.length
           ? `<div class="public-skills">${habilidades.map(h => `
               <span class="public-skill">
-                ${escapeHtml(h.tecnologia)}
+                ${escapeHtml(h.nombre)}
                 <span class="level ${h.nivel}">${h.nivel}</span>
               </span>`).join("")}</div>`
           : `<p class="muted">Sin habilidades cargadas.</p>`}

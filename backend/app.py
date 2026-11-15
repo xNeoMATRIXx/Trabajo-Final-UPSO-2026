@@ -38,6 +38,13 @@ def create_app():
             ],
         })
 
+    @app.errorhandler(400)
+    def _400(error):
+        return jsonify({
+            "error": "solicitud_invalida",
+            "mensaje": error.description
+        }), 400
+
     @app.errorhandler(404)
     def _404(_):
         return jsonify({"error": "not_found"}), 404

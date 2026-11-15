@@ -70,6 +70,64 @@
   </aside>
 
   <main class="panel-main">
+    <!-- Perfil -->
+     <section class="card">
+      <header class="card-head">
+        <h2>Editar mi perfil</h2>
+      </header>
+
+      <form id="form-profile" class="auth-form">
+        <label>Nombre
+          <input
+            type="text"
+            name="nombre"
+            maxlength="120"
+            autocomplete="name"
+          />
+        </label>
+
+        <label>Username
+          <input
+            type="text"
+            name="username"
+            required
+            minlength="3"
+            maxlength="30"
+            pattern="[a-zA-Z0-9_\-]+"
+            autocomplete="username"
+          />
+        </label>
+
+        <label>Email
+          <input
+            type="email"
+            name="email"
+            required
+            maxlength="190"
+            autocomplete="email"
+          />
+        </label>
+
+        <label>Biografía
+          <textarea
+            name="bio"
+            rows="3"
+            maxlength="5000"
+          ></textarea>
+        </label>
+
+        <button type="submit" class="btn btn-primary">
+          Guardar perfil
+        </button>
+
+        <p
+          id="profile-msg"
+          class="form-msg"
+          role="status"
+          aria-live="polite">
+        </p>
+      </form>
+    </section>
     <!-- Habilidades -->
     <section class="card">
       <header class="card-head">
@@ -77,7 +135,7 @@
       </header>
 
       <form id="form-skill" class="inline-form">
-        <select name="tecnologia_id" id="sel-tec" required></select>
+        <select name="habilidad" id="sel-habilidad" aria-label="Lenguaje o tecnología" required></select>
         <select name="nivel" required>
           <option value="basico">Básico</option>
           <option value="intermedio">Intermedio</option>
