@@ -1,52 +1,17 @@
-"""Catálogos estáticos de lenguajes y tecnologías."""
+"""Catalogos de solo lectura con fuente configurable."""
 from flask import Blueprint, jsonify
-
+from services.catalog_service import CatalogError, get_catalog
 
 catalog_bp = Blueprint("catalog", __name__)
 
-LENGUAJES = [
-    {"id": 1, "nombre": "Python"},
-    {"id": 2, "nombre": "JavaScript"},
-    {"id": 3, "nombre": "TypeScript"},
-    {"id": 4, "nombre": "Java"},
-    {"id": 5, "nombre": "C#"},
-    {"id": 6, "nombre": "C++"},
-    {"id": 7, "nombre": "PHP"},
-    {"id": 8, "nombre": "Go"},
-    {"id": 9, "nombre": "Ruby"},
-    {"id": 10, "nombre": "Rust"},
-    {"id": 11, "nombre": "SQL"},
-    {"id": 12, "nombre": "HTML"},
-    {"id": 13, "nombre": "CSS"},
-]
-
-TECNOLOGIAS = [
-    {"id": 1, "nombre": "React"},
-    {"id": 2, "nombre": "Vue"},
-    {"id": 3, "nombre": "Angular"},
-    {"id": 4, "nombre": "Node.js"},
-    {"id": 5, "nombre": "Express"},
-    {"id": 6, "nombre": "Flask"},
-    {"id": 7, "nombre": "Django"},
-    {"id": 8, "nombre": "Laravel"},
-    {"id": 9, "nombre": ".NET"},
-    {"id": 10, "nombre": "MySQL"},
-    {"id": 11, "nombre": "PostgreSQL"},
-    {"id": 12, "nombre": "MongoDB"},
-    {"id": 13, "nombre": "Docker"},
-    {"id": 14, "nombre": "Git"},
-    {"id": 15, "nombre": "AWS"},
-]
-
-LENGUAJES_POR_ID = {item["id"]: item for item in LENGUAJES}
-TECNOLOGIAS_POR_ID = {item["id"]: item for item in TECNOLOGIAS}
-
+@catalog_bp.app_errorhandler(CatalogError)
+def catalog_unavailable(error):
+    return jsonify({"error": "catalogo_no_disponible", "mensaje": str(error)}), 503
 
 @catalog_bp.get("/lenguajes")
 def get_lenguajes():
-    return jsonify(LENGUAJES)
-
+    return jsonify(get_catalog().lenguajes)
 
 @catalog_bp.get("/tecnologias")
 def get_tecnologias():
-    return jsonify(TECNOLOGIAS)
+    return jsonify(get_catalog().tecnologias)

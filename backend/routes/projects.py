@@ -5,7 +5,7 @@ from flask import Blueprint, g, jsonify
 
 from models.database import Cursor
 from . import auth_required, json_object
-from .catalog import LENGUAJES_POR_ID, TECNOLOGIAS_POR_ID
+from .catalog import get_catalog
 
 
 projects_bp = Blueprint("projects", __name__, url_prefix="/proyectos")
@@ -46,8 +46,9 @@ def _validated_project(data):
     if data.get("etapa") not in ETAPAS:
         return None, "etapa_invalida"
 
-    languages = _id_list(data, "lenguajes", LENGUAJES_POR_ID)
-    technologies = _id_list(data, "tecnologias", TECNOLOGIAS_POR_ID)
+    catalog = get_catalog()
+    languages = _id_list(data, "lenguajes", catalog.lenguajes_por_id)
+    technologies = _id_list(data, "tecnologias", catalog.tecnologias_por_id)
     links = data.get("links", [])
     if languages is None or technologies is None or not isinstance(links, list):
         return None, "relaciones_invalidas"
@@ -90,6 +91,7 @@ def _project_ids(cursor, project_id, table, column):
 
 
 def _load_project(cursor, row):
+    catalog = get_catalog()
     project_id = row["id"]
     language_ids = _project_ids(cursor, project_id, "proyecto_lenguaje", "lenguaje_id")
     technology_ids = _project_ids(cursor, project_id, "proyecto_tecnologia", "tecnologia_id")
@@ -107,8 +109,8 @@ def _load_project(cursor, row):
         "fecha_actualizacion": _iso(row["fecha_actualizacion"]),
         "fecha_finalizacion": _iso(row["fecha_finalizacion"]),
         "fecha_deadline": _iso(row["fecha_deadline"]),
-        "lenguajes": [LENGUAJES_POR_ID[item_id] for item_id in language_ids],
-        "tecnologias": [TECNOLOGIAS_POR_ID[item_id] for item_id in technology_ids],
+        "lenguajes": [catalog.lenguaje(item_id) for item_id in language_ids],
+        "tecnologias": [catalog.tecnologia(item_id) for item_id in technology_ids],
         "links": links,
     }
 

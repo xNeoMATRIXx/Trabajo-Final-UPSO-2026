@@ -206,12 +206,20 @@
   const selector = document.getElementById("sel-habilidad");
   const formSkill = document.getElementById("form-skill");
   const list = document.getElementById("list-skills");
-  const addButton = form.querySelector('button[type="submit"]');
+  const addButton = formSkill.querySelector('button[type="submit"]');
 
   const NIVELES = ["basico", "intermedio", "avanzado"];
   let tecnologias = [];
   let habilidades = [];
   let lenguajes = [];
+
+  function key(h) {
+    return h.tipo + ":" + h.elemento_id;
+  }
+
+  function path(h) {
+    return "/habilidades/" + h.tipo + "/" + h.elemento_id;
+  }
 
   async function init() {
     try {
@@ -305,7 +313,7 @@
     addButton.disabled = true;
     try {
       const nueva = await window.API.post("/habilidades", {
-        tipo, elemento_id: elementId, nivel: new FormData(form).get("nivel"),
+        tipo, elemento_id: elementId, nivel: new FormData(formSkill).get("nivel"),
       });
       habilidades.push(nueva);
       render();
