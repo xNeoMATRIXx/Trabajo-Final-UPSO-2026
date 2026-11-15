@@ -50,8 +50,17 @@ def _validated_project(data):
     languages = _id_list(data, "lenguajes", catalog.lenguajes_por_id)
     technologies = _id_list(data, "tecnologias", catalog.tecnologias_por_id)
     links = data.get("links", [])
+    
+    # Rechazar listas incorrectas o IDs ajenos al catálogo.
     if languages is None or technologies is None or not isinstance(links, list):
         return None, "relaciones_invalidas"
+
+    # Exigir al menos un elemento de cada catálogo.
+    if not languages:
+        return None, "lenguajes_requeridos"
+
+    if not technologies:
+        return None, "tecnologias_requeridas"
 
     clean_links = []
     for link in links:

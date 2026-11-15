@@ -478,7 +478,19 @@
       tecnologias: collectChecked(chkTec),
       links: collectLinks(),
     };
-    msg.textContent = "Guardando..."; msg.className = "form-msg";
+    if (payload.lenguajes.length === 0) {
+      msg.textContent = "Seleccioná al menos un lenguaje para el proyecto.";
+      msg.className = "form-msg error";
+      return;
+    }
+
+    if (payload.tecnologias.length === 0) {
+      msg.textContent = "Seleccioná al menos una tecnología para el proyecto.";
+      msg.className = "form-msg error";
+      return;
+    }
+    msg.textContent = "Guardando..."; 
+    msg.className = "form-msg";
     try {
       if (id) await window.API.put("/proyectos/" + id, payload);
       else await window.API.post("/proyectos", payload);
