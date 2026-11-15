@@ -1,0 +1,28 @@
+info:
+  name: 081 Portfolio publico B sin token
+  type: http
+  seq: 81
+http:
+  method: GET
+  url: '{{base_url}}/u/{{username_b}}'
+  headers:
+  - name: Accept
+    value: application/json
+runtime:
+  scripts:
+  - type: tests
+    code: |-
+      test("HTTP 200", () => { expect(res.getStatus()).to.equal(200); });
+      test("Respuesta JSON", () => { expect(String(res.getHeader("content-type"))).to.include("application/json"); });
+      test("Portfolio publico correcto", () => {
+        const d=res.getBody();
+        expect(d.perfil.username).to.equal(bru.getVar("username_b"));
+        expect(d.perfil).not.to.have.property("email");
+        expect(d.perfil).not.to.have.property("password_hash");
+        expect(d).not.to.have.property("token");
+        expect(d.habilidades.length).to.equal(2);
+        expect(d.proyectos.length).to.equal(1);
+        expect(d.proyectos[0].id).to.equal(Number(bru.getVar("project_b")));
+      });
+settings:
+  encodeUrl: true

@@ -1,0 +1,48 @@
+info:
+  name: 071 Tipo de enlace como objeto
+  type: http
+  seq: 71
+http:
+  method: POST
+  url: '{{base_url}}/proyectos'
+  headers:
+  - name: Accept
+    value: application/json
+  - name: Content-Type
+    value: application/json
+  - name: Authorization
+    value: Bearer {{token_a}}
+  body:
+    type: json
+    data: |-
+      {
+        "nombre": "Proyecto A {{run_id}}",
+        "descripcion": "Proyecto de prueba con varias relaciones",
+        "etapa": "implementacion",
+        "fecha_deadline": "2030-12-31",
+        "fecha_finalizacion": null,
+        "lenguajes": [
+          {{lang1}},
+          {{lang2}}
+        ],
+        "tecnologias": [
+          {{tech1}},
+          {{tech2}}
+        ],
+        "links": [
+          {
+            "tipo": {},
+            "url": "https://example.com"
+          }
+        ]
+      }
+runtime:
+  scripts:
+  - type: tests
+    code: |-
+      test("HTTP 400", () => { expect(res.getStatus()).to.equal(400); });
+      test("Respuesta JSON", () => { expect(String(res.getHeader("content-type"))).to.include("application/json"); });
+      test("Código de error presente", () => { expect(typeof res.getBody().error).to.equal("string"); });
+      test("Error esperado", () => { expect(res.getBody().error).to.equal("links_invalidos"); });
+settings:
+  encodeUrl: true

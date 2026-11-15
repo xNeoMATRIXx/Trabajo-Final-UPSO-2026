@@ -1,0 +1,28 @@
+info:
+  name: 020 Perfil con token vencido - requiere helper
+  type: http
+  seq: 20
+http:
+  method: GET
+  url: '{{base_url}}/auth/me'
+  headers:
+  - name: Accept
+    value: application/json
+  - name: Authorization
+    value: Bearer {{expired_token}}
+runtime:
+  scripts:
+  - type: before-request
+    code: |-
+      if (!bru.getEnvVar("expired_token")) {
+        console.warn("OMITIDA: falta expired_token. Ver LEEME.md y generar_token_vencido.py. No cuenta como prueba aprobada.");
+        bru.runner.skipRequest();
+      }
+  - type: tests
+    code: |-
+      test("HTTP 401", () => { expect(res.getStatus()).to.equal(401); });
+      test("Respuesta JSON", () => { expect(String(res.getHeader("content-type"))).to.include("application/json"); });
+      test("Código de error presente", () => { expect(typeof res.getBody().error).to.equal("string"); });
+      test("Error esperado", () => { expect(res.getBody().error).to.equal("token_expired"); });
+settings:
+  encodeUrl: true

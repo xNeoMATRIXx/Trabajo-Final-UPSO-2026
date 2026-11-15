@@ -1,0 +1,29 @@
+info:
+  name: 013 Rechazar username duplicado
+  type: http
+  seq: 13
+http:
+  method: POST
+  url: '{{base_url}}/auth/register'
+  headers:
+  - name: Accept
+    value: application/json
+  - name: Content-Type
+    value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "email": "qa.dup.{{run_id}}@example.com",
+        "username": "{{username_a}}",
+        "password": "{{password}}"
+      }
+runtime:
+  scripts:
+  - type: tests
+    code: |-
+      test("HTTP 409", () => { expect(res.getStatus()).to.equal(409); });
+      test("Respuesta JSON", () => { expect(String(res.getHeader("content-type"))).to.include("application/json"); });
+      test("Código de error presente", () => { expect(typeof res.getBody().error).to.equal("string"); });
+settings:
+  encodeUrl: true

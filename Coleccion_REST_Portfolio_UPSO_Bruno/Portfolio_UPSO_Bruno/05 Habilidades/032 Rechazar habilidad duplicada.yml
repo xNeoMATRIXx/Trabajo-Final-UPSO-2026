@@ -1,0 +1,32 @@
+info:
+  name: 032 Rechazar habilidad duplicada
+  type: http
+  seq: 32
+http:
+  method: POST
+  url: '{{base_url}}/habilidades'
+  headers:
+  - name: Accept
+    value: application/json
+  - name: Content-Type
+    value: application/json
+  - name: Authorization
+    value: Bearer {{token_a}}
+  body:
+    type: json
+    data: |-
+      {
+        "tipo": "lenguaje",
+        "elemento_id": {{lang1}},
+        "nivel": "avanzado"
+      }
+runtime:
+  scripts:
+  - type: tests
+    code: |-
+      test("HTTP 409", () => { expect(res.getStatus()).to.equal(409); });
+      test("Respuesta JSON", () => { expect(String(res.getHeader("content-type"))).to.include("application/json"); });
+      test("Código de error presente", () => { expect(typeof res.getBody().error).to.equal("string"); });
+      test("Error esperado", () => { expect(res.getBody().error).to.equal("habilidad_ya_existe"); });
+settings:
+  encodeUrl: true

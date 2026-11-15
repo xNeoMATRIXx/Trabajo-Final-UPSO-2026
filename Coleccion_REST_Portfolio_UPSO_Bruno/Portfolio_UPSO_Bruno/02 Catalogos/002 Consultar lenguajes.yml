@@ -1,0 +1,33 @@
+info:
+  name: 002 Consultar lenguajes
+  type: http
+  seq: 2
+http:
+  method: GET
+  url: '{{base_url}}/lenguajes'
+  headers:
+  - name: Accept
+    value: application/json
+runtime:
+  scripts:
+  - type: tests
+    code: |-
+      test("HTTP 200", () => { expect(res.getStatus()).to.equal(200); });
+      test("Respuesta JSON", () => { expect(String(res.getHeader("content-type"))).to.include("application/json"); });
+      test("Hay al menos dos opciones para la demostración", () => {
+        const items = res.getBody();
+        expect(Array.isArray(items)).to.equal(true);
+        expect(items.length >= 2).to.equal(true);
+        expect(items.every(x => Number.isInteger(x.id) && x.id > 0 && typeof x.nombre === "string")).to.equal(true);
+      });
+      if (res.getStatus() === 200 && Array.isArray(res.getBody()) && res.getBody().length >= 2) {
+        const items = res.getBody();
+        bru.setVar("lang1", items[0].id);
+        bru.setVar("lang2", items[1].id);
+        const used = new Set(items.map(x => x.id));
+        let missing = 1;
+        while (used.has(missing)) missing++;
+        bru.setVar("unknown_lang", missing);
+      }
+settings:
+  encodeUrl: true

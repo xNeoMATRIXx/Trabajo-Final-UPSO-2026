@@ -1,0 +1,21 @@
+info:
+  name: 021 Consultar perfil A
+  type: http
+  seq: 21
+http:
+  method: GET
+  url: '{{base_url}}/auth/me'
+  headers:
+  - name: Accept
+    value: application/json
+  - name: Authorization
+    value: Bearer {{token_a}}
+runtime:
+  scripts:
+  - type: tests
+    code: |-
+      test("HTTP 200", () => { expect(res.getStatus()).to.equal(200); });
+      test("Respuesta JSON", () => { expect(String(res.getHeader("content-type"))).to.include("application/json"); });
+      test("Solo identidad A", () => { expect(res.getBody().user.id).to.equal(Number(bru.getVar("user_a"))); });
+settings:
+  encodeUrl: true

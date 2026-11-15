@@ -1,0 +1,31 @@
+info:
+  name: 023 Guardar perfil sin cambios
+  type: http
+  seq: 23
+http:
+  method: PUT
+  url: '{{base_url}}/auth/me'
+  headers:
+  - name: Accept
+    value: application/json
+  - name: Content-Type
+    value: application/json
+  - name: Authorization
+    value: Bearer {{token_a}}
+  body:
+    type: json
+    data: |-
+      {
+        "email": "{{email_a}}",
+        "username": "{{username_a}}",
+        "nombre": "{{nombre_a}}",
+        "bio": "Biografía actualizada desde Bruno"
+      }
+runtime:
+  scripts:
+  - type: tests
+    code: |-
+      test("HTTP 200", () => { expect(res.getStatus()).to.equal(200); });
+      test("Respuesta JSON", () => { expect(String(res.getHeader("content-type"))).to.include("application/json"); });
+settings:
+  encodeUrl: true

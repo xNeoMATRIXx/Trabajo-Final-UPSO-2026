@@ -1,0 +1,28 @@
+info:
+  name: 024 Login con email nuevo
+  type: http
+  seq: 24
+http:
+  method: POST
+  url: '{{base_url}}/auth/login'
+  headers:
+  - name: Accept
+    value: application/json
+  - name: Content-Type
+    value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "email": "{{email_a}}",
+        "password": "{{password}}"
+      }
+runtime:
+  scripts:
+  - type: tests
+    code: |-
+      test("HTTP 200", () => { expect(res.getStatus()).to.equal(200); });
+      test("Respuesta JSON", () => { expect(String(res.getHeader("content-type"))).to.include("application/json"); });
+      if (res.getStatus() === 200) bru.setVar("token_a", res.getBody().token);
+settings:
+  encodeUrl: true

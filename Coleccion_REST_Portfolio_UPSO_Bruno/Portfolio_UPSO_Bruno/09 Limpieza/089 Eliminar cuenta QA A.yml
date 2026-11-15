@@ -1,0 +1,26 @@
+info:
+  name: 089 Eliminar cuenta QA A
+  type: http
+  seq: 89
+http:
+  method: DELETE
+  url: '{{base_url}}/auth/me'
+  headers:
+  - name: Accept
+    value: application/json
+  - name: Authorization
+    value: Bearer {{token_a}}
+runtime:
+  scripts:
+  - type: before-request
+    code: |-
+      if (String(bru.getEnvVar("limpiar_al_final")).toLowerCase() !== "true") {
+        console.warn("OMITIDA limpieza: se conservan las cuentas y portfolios QA de esta ejecución.");
+        bru.runner.skipRequest();
+      }
+  - type: tests
+    code: |-
+      test("HTTP 200", () => { expect(res.getStatus()).to.equal(200); });
+      test("Respuesta JSON", () => { expect(String(res.getHeader("content-type"))).to.include("application/json"); });
+settings:
+  encodeUrl: true

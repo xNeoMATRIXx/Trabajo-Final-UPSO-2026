@@ -1,0 +1,30 @@
+info:
+  name: 015 Rechazar nombre demasiado largo
+  type: http
+  seq: 15
+http:
+  method: POST
+  url: '{{base_url}}/auth/register'
+  headers:
+  - name: Accept
+    value: application/json
+  - name: Content-Type
+    value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "email": "qa.long.{{run_id}}@example.com",
+        "username": "qa_long_{{run_id}}",
+        "password": "{{password}}",
+        "nombre": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      }
+runtime:
+  scripts:
+  - type: tests
+    code: |-
+      test("HTTP 400", () => { expect(res.getStatus()).to.equal(400); });
+      test("Respuesta JSON", () => { expect(String(res.getHeader("content-type"))).to.include("application/json"); });
+      test("Código de error presente", () => { expect(typeof res.getBody().error).to.equal("string"); });
+settings:
+  encodeUrl: true

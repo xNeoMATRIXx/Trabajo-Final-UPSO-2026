@@ -1,0 +1,28 @@
+info:
+  name: 076 JSON raiz como lista
+  type: http
+  seq: 76
+http:
+  method: POST
+  url: '{{base_url}}/proyectos'
+  headers:
+  - name: Accept
+    value: application/json
+  - name: Content-Type
+    value: application/json
+  - name: Authorization
+    value: Bearer {{token_a}}
+  body:
+    type: json
+    data: |-
+      []
+runtime:
+  scripts:
+  - type: tests
+    code: |-
+      test("HTTP 400", () => { expect(res.getStatus()).to.equal(400); });
+      test("Respuesta JSON", () => { expect(String(res.getHeader("content-type"))).to.include("application/json"); });
+      test("Código de error presente", () => { expect(typeof res.getBody().error).to.equal("string"); });
+      test("Error esperado", () => { expect(res.getBody().error).to.equal("solicitud_invalida"); });
+settings:
+  encodeUrl: true

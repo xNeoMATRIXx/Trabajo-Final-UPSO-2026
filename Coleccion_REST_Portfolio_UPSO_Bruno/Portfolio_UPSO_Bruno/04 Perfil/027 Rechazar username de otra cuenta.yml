@@ -1,0 +1,32 @@
+info:
+  name: 027 Rechazar username de otra cuenta
+  type: http
+  seq: 27
+http:
+  method: PUT
+  url: '{{base_url}}/auth/me'
+  headers:
+  - name: Accept
+    value: application/json
+  - name: Content-Type
+    value: application/json
+  - name: Authorization
+    value: Bearer {{token_a}}
+  body:
+    type: json
+    data: |-
+      {
+        "email": "{{email_a}}",
+        "username": "{{username_b}}",
+        "nombre": "{{nombre_a}}",
+        "bio": "Biografía actualizada desde Bruno"
+      }
+runtime:
+  scripts:
+  - type: tests
+    code: |-
+      test("HTTP 409", () => { expect(res.getStatus()).to.equal(409); });
+      test("Respuesta JSON", () => { expect(String(res.getHeader("content-type"))).to.include("application/json"); });
+      test("Código de error presente", () => { expect(typeof res.getBody().error).to.equal("string"); });
+settings:
+  encodeUrl: true

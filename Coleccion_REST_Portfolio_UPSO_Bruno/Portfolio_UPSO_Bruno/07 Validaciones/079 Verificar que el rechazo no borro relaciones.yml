@@ -1,0 +1,21 @@
+info:
+  name: 079 Verificar que el rechazo no borro relaciones
+  type: http
+  seq: 79
+http:
+  method: GET
+  url: '{{base_url}}/proyectos'
+  headers:
+  - name: Accept
+    value: application/json
+  - name: Authorization
+    value: Bearer {{token_a}}
+runtime:
+  scripts:
+  - type: tests
+    code: |-
+      test("HTTP 200", () => { expect(res.getStatus()).to.equal(200); });
+      test("Respuesta JSON", () => { expect(String(res.getHeader("content-type"))).to.include("application/json"); });
+      test("Datos A conservados", () => { const p=res.getBody().find(x=>x.id===Number(bru.getVar("project_a"))); expect(p.lenguajes.length).to.equal(2); expect(p.tecnologias.length).to.equal(2); expect(p.links.length).to.equal(4); expect(p.etapa).to.equal("testing"); });
+settings:
+  encodeUrl: true

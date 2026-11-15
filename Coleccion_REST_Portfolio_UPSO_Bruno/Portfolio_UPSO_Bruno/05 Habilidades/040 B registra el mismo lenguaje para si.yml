@@ -1,0 +1,30 @@
+info:
+  name: 040 B registra el mismo lenguaje para si
+  type: http
+  seq: 40
+http:
+  method: POST
+  url: '{{base_url}}/habilidades'
+  headers:
+  - name: Accept
+    value: application/json
+  - name: Content-Type
+    value: application/json
+  - name: Authorization
+    value: Bearer {{token_b}}
+  body:
+    type: json
+    data: |-
+      {
+        "tipo": "lenguaje",
+        "elemento_id": {{lang1}},
+        "nivel": "basico"
+      }
+runtime:
+  scripts:
+  - type: tests
+    code: |-
+      test("HTTP 201", () => { expect(res.getStatus()).to.equal(201); });
+      test("Respuesta JSON", () => { expect(String(res.getHeader("content-type"))).to.include("application/json"); });
+settings:
+  encodeUrl: true

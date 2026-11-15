@@ -1,0 +1,20 @@
+info:
+  name: 018 Perfil sin token
+  type: http
+  seq: 18
+http:
+  method: GET
+  url: '{{base_url}}/auth/me'
+  headers:
+  - name: Accept
+    value: application/json
+runtime:
+  scripts:
+  - type: tests
+    code: |-
+      test("HTTP 401", () => { expect(res.getStatus()).to.equal(401); });
+      test("Respuesta JSON", () => { expect(String(res.getHeader("content-type"))).to.include("application/json"); });
+      test("Código de error presente", () => { expect(typeof res.getBody().error).to.equal("string"); });
+      test("Error esperado", () => { expect(res.getBody().error).to.equal("auth_required"); });
+settings:
+  encodeUrl: true

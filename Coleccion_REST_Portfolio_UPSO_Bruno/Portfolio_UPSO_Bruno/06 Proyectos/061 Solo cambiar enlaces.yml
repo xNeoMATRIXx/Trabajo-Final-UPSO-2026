@@ -1,0 +1,44 @@
+info:
+  name: 061 Solo cambiar enlaces
+  type: http
+  seq: 61
+http:
+  method: PUT
+  url: '{{base_url}}/proyectos/{{project_a}}'
+  headers:
+  - name: Accept
+    value: application/json
+  - name: Content-Type
+    value: application/json
+  - name: Authorization
+    value: Bearer {{token_a}}
+  body:
+    type: json
+    data: |-
+      {}
+runtime:
+  scripts:
+  - type: before-request
+    code: |-
+      const p = JSON.parse(bru.getVar("project_payload_a"));
+      p.links.push({tipo:"documentacion",url:"https://example.com/docs"});
+      req.setBody(JSON.stringify(p));
+      await bru.sleep(1100);
+  - type: tests
+    code: |-
+      test("HTTP 200", () => { expect(res.getStatus()).to.equal(200); });
+      test("Respuesta JSON", () => { expect(String(res.getHeader("content-type"))).to.include("application/json"); });
+      test("Relaciones guardadas", () => { const p=res.getBody(); expect(p.links.length).to.equal(4); });
+      test("Ultima actualizacion avanza", () => { expect(Date.parse(res.getBody().fecha_actualizacion) > Date.parse(bru.getVar("project_updated_a"))).to.equal(true); });
+      if (res.getStatus() === 200 || res.getStatus() === 201) {
+        const p = res.getBody();
+        bru.setVar("project_payload_a", JSON.stringify({
+          nombre:p.nombre, descripcion:p.descripcion, etapa:p.etapa,
+          fecha_deadline:p.fecha_deadline, fecha_finalizacion:p.fecha_finalizacion,
+          lenguajes:p.lenguajes.map(x=>x.id), tecnologias:p.tecnologias.map(x=>x.id),
+          links:p.links.map(x=>({tipo:x.tipo,url:x.url}))
+        }));
+        bru.setVar("project_updated_a", p.fecha_actualizacion);
+      }
+settings:
+  encodeUrl: true

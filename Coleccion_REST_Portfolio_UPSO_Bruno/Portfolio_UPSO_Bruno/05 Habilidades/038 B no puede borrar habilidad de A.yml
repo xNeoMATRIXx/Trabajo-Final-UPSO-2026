@@ -1,0 +1,21 @@
+info:
+  name: 038 B no puede borrar habilidad de A
+  type: http
+  seq: 38
+http:
+  method: DELETE
+  url: '{{base_url}}/habilidades/tecnologia/{{tech1}}'
+  headers:
+  - name: Accept
+    value: application/json
+  - name: Authorization
+    value: Bearer {{token_b}}
+runtime:
+  scripts:
+  - type: tests
+    code: |-
+      test("HTTP 404", () => { expect(res.getStatus()).to.equal(404); });
+      test("Respuesta JSON", () => { expect(String(res.getHeader("content-type"))).to.include("application/json"); });
+      test("Código de error presente", () => { expect(typeof res.getBody().error).to.equal("string"); });
+settings:
+  encodeUrl: true

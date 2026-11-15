@@ -1,0 +1,31 @@
+info:
+  name: 049 Rechazar Nivel como lista
+  type: http
+  seq: 49
+http:
+  method: POST
+  url: '{{base_url}}/habilidades'
+  headers:
+  - name: Accept
+    value: application/json
+  - name: Content-Type
+    value: application/json
+  - name: Authorization
+    value: Bearer {{token_a}}
+  body:
+    type: json
+    data: |-
+      {
+        "tipo": "lenguaje",
+        "elemento_id": {{lang1}},
+        "nivel": []
+      }
+runtime:
+  scripts:
+  - type: tests
+    code: |-
+      test("HTTP 400", () => { expect(res.getStatus()).to.equal(400); });
+      test("Respuesta JSON", () => { expect(String(res.getHeader("content-type"))).to.include("application/json"); });
+      test("Código de error presente", () => { expect(typeof res.getBody().error).to.equal("string"); });
+settings:
+  encodeUrl: true
