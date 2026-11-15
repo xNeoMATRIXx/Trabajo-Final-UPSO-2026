@@ -649,7 +649,40 @@ function showPanel() {
 
   function fmtDate(iso) {
     if (!iso) return "—";
-    try { return new Date(iso).toLocaleDateString("es-ES", { year: "numeric", month: "short", day: "numeric" }); }
+    try { 
+      const text = String(iso).trim();
+
+      // Detectar fechas sin hora: YYYY-MM-DD.
+      const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(text);
+
+      const date = new Date(
+        dateOnly ? `${text}T00:00:00Z` : text
+      );
+
+      // Evitar mostrar fechas inválidas.
+      if (Number.isNaN(date.getTime())) return "—";
+
+      // Rechazar días inexistentes que JavaScript haya normalizado.
+      if (
+        dateOnly &&
+        date.toISOString().slice(0, 10) !== text
+      ) {
+        return "—";
+      }
+
+      const options = {
+        year: "numeric",
+        month: "short",
+        day: "numeric"
+      };
+
+      // Para fechas sin hora, conservar el día original.
+      if (dateOnly) {
+        options.timeZone = "UTC";
+      }
+
+      return date.toLocaleDateString("es-ES", options);
+    }
     catch (e) { return iso; }
   }
 
