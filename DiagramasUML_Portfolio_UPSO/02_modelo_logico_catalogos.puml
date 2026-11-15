@@ -1,0 +1,88 @@
+@startuml
+hide methods
+hide circle
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName DejaVu Sans
+skinparam defaultFontSize 12
+skinparam dpi 160
+skinparam nodesep 125
+skinparam ranksep 65
+skinparam class {
+  BackgroundColor white
+  HeaderBackgroundColor #EFF5F9
+  BorderColor #22628C
+  FontColor #152D47
+  AttributeFontColor #23384A
+}
+skinparam ArrowColor #22628C
+skinparam note {
+  BackgroundColor #F4F8FA
+  BorderColor #BCD0DF
+  FontSize 12
+}
+skinparam legend {
+  BackgroundColor #F4F8FA
+  BorderColor #BCD0DF
+  FontSize 12
+}
+skinparam ArrowFontSize 12
+title Portfolio UPSO - Modelo lógico completo con catálogos
+class "Usuario" as Usuario <<entidad local>> {
+  {field} id : INT {PK, AI}
+  {field} email : VARCHAR(190) {UQ}
+  {field} username : VARCHAR(30) {UQ}
+  {field} password_hash : VARCHAR(255)
+  {field} nombre : VARCHAR(120) [0..1]
+  {field} bio : TEXT [0..1]
+  {field} created_at : TIMESTAMP [0..1]
+}
+class "Habilidad" as Habilidad <<entidad local>> {
+  {field} usuario_id : INT {PK, FK}
+  {field} tipo : TipoHabilidad {PK}
+  {field} elemento_id : INT {PK}
+  {field} nivel : NivelDominio
+}
+class "Proyecto" as Proyecto <<entidad local>> {
+  {field} id : INT {PK, AI}
+  {field} usuario_id : INT {FK}
+  {field} nombre : VARCHAR(160)
+  {field} descripcion : TEXT [0..1]
+  {field} etapa : EtapaProyecto
+  {field} fecha_creacion : TIMESTAMP [0..1]
+  {field} fecha_actualizacion : TIMESTAMP [0..1]
+  {field} fecha_finalizacion : DATE [0..1]
+  {field} fecha_deadline : DATE [0..1]
+}
+class "EnlaceProyecto" as EnlaceProyecto <<entidad local>> {
+  {field} id : INT {PK, AI}
+  {field} proyecto_id : INT {FK}
+  {field} tipo : TipoLink
+  {field} url : VARCHAR(500)
+}
+class "Lenguaje" as Lenguaje <<catálogo externo>> #E7F5F5 {
+  {field} id : Integer
+  {field} nombre : String
+}
+class "Tecnología" as Tecnologia <<catálogo externo>> #E7F5F5 {
+  {field} id : Integer
+  {field} nombre : String
+  {field} categoria : String
+}
+Usuario "1" -down- "0..*" Habilidad : registra
+Usuario "1" -right- "0..*" Proyecto
+Proyecto "1" -right- "0..*" EnlaceProyecto
+Proyecto "0..*" .down. "1..*" Lenguaje : usa
+Proyecto "0..*" .down. "1..*" Tecnologia : usa
+Habilidad "0..*" .right. "0..1" Lenguaje
+Habilidad "0..*" .. "0..1" Tecnologia
+Lenguaje -[hidden]right- Tecnologia
+legend bottom
+  Línea discontinua: referencia lógica; no es una FK SQL local.
+  N:M Proyecto-Lenguaje: proyecto_lenguaje. N:M Proyecto-Tecnología: proyecto_tecnologia.
+  Mínimo de un lenguaje y una tecnología: validación del backend.
+  Habilidad {xor}: un lenguaje si tipo = lenguaje, o una tecnología si tipo = tecnologia.
+  Atributos locales completos, con los mismos nombres y tipos del esquema físico.
+endlegend
+@enduml
