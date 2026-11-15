@@ -578,7 +578,7 @@
         ${habilidades.length
           ? `<div class="public-skills">${habilidades.map(h => `
               <span class="public-skill">
-                ${escapeHtml(h.tecnologia)}
+                ${escapeHtml(h.nombre)}
                 <span class="level ${h.nivel}">${h.nivel}</span>
               </span>`).join("")}</div>`
           : `<p class="muted">Sin habilidades cargadas.</p>`}
