@@ -50,7 +50,7 @@ def _validated_project(data):
     languages = _id_list(data, "lenguajes", catalog.lenguajes_por_id)
     technologies = _id_list(data, "tecnologias", catalog.tecnologias_por_id)
     links = data.get("links", [])
-    
+
     # Rechazar listas incorrectas o IDs ajenos al catálogo.
     if languages is None or technologies is None or not isinstance(links, list):
         return None, "relaciones_invalidas"
@@ -199,7 +199,8 @@ def update_project(project_id):
     with Cursor(commit=True) as cursor:
         cursor.execute(
             "UPDATE proyectos SET nombre = %s, descripcion = %s, etapa = %s, "
-            "fecha_deadline = %s, fecha_finalizacion = %s "
+            "fecha_deadline = %s, fecha_finalizacion = %s, "
+            "fecha_actualizacion = CURRENT_TIMESTAMP "
             "WHERE id = %s AND usuario_id = %s",
             (
                 project["nombre"], project["descripcion"], project["etapa"],
