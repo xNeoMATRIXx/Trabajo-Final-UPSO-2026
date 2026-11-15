@@ -156,18 +156,111 @@
     return map[m] || m;
   }
 
-  function showPanel() {
+  const formProfile = document.getElementById("form-profile");
+  const profileMsg = document.getElementById("profile-msg");
+
+function renderProfile(user) {
+  userChip.textContent = "@" + user.username;
+
+  document.getElementById("panel-username").textContent =
+    user.nombre || user.username;
+
+  document.getElementById("panel-email").textContent =
+    user.email;
+
+  document.getElementById("panel-public-link").href =
+    "public.html?u=" + encodeURIComponent(user.username);
+
+  for (const field of ["nombre", "username", "email", "bio"]) {
+    formProfile.elements.namedItem(field).value =
+      user[field] ?? "";
+  }
+}
+
+formProfile.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  if (!formProfile.reportValidity()) return;
+
+  const data = new FormData(formProfile);
+  const button = formProfile.querySelector(
+    'button[type="submit"]'
+  );
+
+  button.disabled = true;
+  profileMsg.textContent = "Guardando perfil...";
+  profileMsg.className = "form-msg";
+
+  try {
+    const response = await window.API.put("/auth/me", {
+      email: String(data.get("email") ?? "").trim(),
+      username: String(data.get("username") ?? "").trim(),
+      nombre: String(data.get("nombre") ?? "").trim() || null,
+      bio: String(data.get("bio") ?? "").trim() || null,
+    });
+
+    // Actualizar los datos guardados en el navegador.
+    window.API.setUser(response.user);
+
+    // Actualizar el formulario, el panel y el enlace público.
+    renderProfile(response.user);
+
+    profileMsg.textContent = "Perfil actualizado.";
+    profileMsg.className = "form-msg ok";
+  } catch (err) {
+    const messages = {
+      email_invalido:
+        "Ingresá un email válido de hasta 190 caracteres.",
+      username_invalido:
+        "El username debe tener entre 3 y 30 caracteres: letras, números, _ o -.",
+      nombre_invalido:
+        "El nombre puede tener hasta 120 caracteres.",
+      bio_invalida:
+        "La biografía puede tener hasta 5000 caracteres.",
+      email_ya_registrado:
+        "Ese email pertenece a otra cuenta.",
+      username_ya_usado:
+        "Ese username pertenece a otra cuenta.",
+      email_o_username_ya_utilizado:
+        "El email o username ya está en uso.",
+      usuario_no_encontrado:
+        "La cuenta ya no existe.",
+      token_expired:
+        "La sesión venció. Volvé a iniciar sesión.",
+      token_invalid:
+        "La sesión no es válida. Volvé a iniciar sesión.",
+      auth_required:
+        "Iniciá sesión para guardar el perfil.",
+    };
+
+    profileMsg.textContent =
+      messages[err.message] || err.message;
+
+    profileMsg.className = "form-msg error";
+  } finally {
+    button.disabled = false;
+  }
+});
+
+function showPanel() {
+    const user = window.API.getUser();
+
+    if (!user) {
+      showAuth();
+      return;
+    }
+
     viewAuth.classList.add("hidden");
     viewPanel.classList.remove("hidden");
-    const u = window.API.getUser();
-    userChip.textContent = "@" + u.username;
     userChip.classList.remove("hidden");
     btnLogout.classList.remove("hidden");
-    document.getElementById("panel-username").textContent = (u.nombre || u.username);
-    document.getElementById("panel-email").textContent = u.email;
-    const link = document.getElementById("panel-public-link");
-    link.href = "public.html?u=" + encodeURIComponent(u.username);
-    // Inicializar secciones.
+
+    renderProfile(user);
+
+    profileMsg.textContent = "";
+    profileMsg.className = "form-msg";
+
+    // Inicializar secciones
     window.Skills.init();
     window.Projects.init();
   }

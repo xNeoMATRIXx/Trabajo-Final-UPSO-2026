@@ -128,6 +128,99 @@ def me():
         return jsonify({"error": "usuario_no_encontrado"}), 404
     return jsonify({"user": _public_user(row)})
 
+@auth_bp.put("/me")
+@auth_required
+def update_me():
+    data = json_object()
+
+    allowed = {"email", "username", "nombre", "bio"}
+    if set(data) - allowed:
+        return jsonify({"error": "campos_no_permitidos"}), 400
+
+    email = data.get("email")
+    username = data.get("username")
+    nombre = data.get("nombre")
+    bio = data.get("bio")
+
+    if not isinstance(email, str):
+        return jsonify({"error": "email_invalido"}), 400
+
+    email = email.strip().lower()
+    if len(email) > 190 or not EMAIL_RE.fullmatch(email):
+        return jsonify({"error": "email_invalido"}), 400
+
+    if not isinstance(username, str):
+        return jsonify({"error": "username_invalido"}), 400
+
+    username = username.strip()
+    if not USERNAME_RE.fullmatch(username):
+        return jsonify({"error": "username_invalido"}), 400
+
+    if nombre is not None and (
+        not isinstance(nombre, str) or len(nombre) > 120
+    ):
+        return jsonify({"error": "nombre_invalido"}), 400
+
+    if bio is not None and (
+        not isinstance(bio, str) or len(bio) > 5000
+    ):
+        return jsonify({"error": "bio_invalida"}), 400
+
+    nombre = (nombre.strip() or None) if nombre is not None else None
+    bio = (bio.strip() or None) if bio is not None else None
+
+    try:
+        with Cursor(commit=True) as cursor:
+            # La identidad proviene exclusivamente del token.
+            cursor.execute(
+                "SELECT id FROM usuarios WHERE id = %s FOR UPDATE",
+                (g.user_id,),
+            )
+
+            if cursor.fetchone() is None:
+                return jsonify({"error": "usuario_no_encontrado"}), 404
+
+            # Permitir conservar el email propio, pero no usar el de otro.
+            cursor.execute(
+                "SELECT id FROM usuarios WHERE email = %s AND id <> %s",
+                (email, g.user_id),
+            )
+
+            if cursor.fetchone() is not None:
+                return jsonify({"error": "email_ya_registrado"}), 409
+
+            cursor.execute(
+                "SELECT id FROM usuarios WHERE username = %s AND id <> %s",
+                (username, g.user_id),
+            )
+
+            if cursor.fetchone() is not None:
+                return jsonify({"error": "username_ya_usado"}), 409
+
+            cursor.execute(
+                "UPDATE usuarios "
+                "SET email = %s, username = %s, nombre = %s, bio = %s "
+                "WHERE id = %s",
+                (email, username, nombre, bio, g.user_id),
+            )
+
+            cursor.execute(
+                "SELECT id, email, username, nombre, bio "
+                "FROM usuarios WHERE id = %s",
+                (g.user_id,),
+            )
+            row = cursor.fetchone()
+
+    except mysql.connector.IntegrityError as exc:
+        # También cubre duplicados producidos por peticiones simultáneas.
+        if exc.errno == 1062:
+            return jsonify({
+                "error": "email_o_username_ya_utilizado"
+            }), 409
+        raise
+
+    return jsonify({"user": _public_user(row)})
+
 
 @auth_bp.delete("/me")
 @auth_required
