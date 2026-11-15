@@ -4,7 +4,7 @@ from datetime import date, datetime
 from flask import Blueprint, g, jsonify
 
 from models.database import Cursor
-from . import auth_required, json_object
+from . import auth_required, json_object, valid_id, valid_text
 from .catalog import get_catalog
 
 
@@ -23,72 +23,136 @@ def _id_list(data, key, catalog):
         return None
     result = []
     for value in values:
-        if isinstance(value, bool):
+        if not valid_id(value) or value not in catalog:
             return None
-        try:
-            item_id = int(value)
-        except (TypeError, ValueError):
-            return None
-        if item_id not in catalog:
-            return None
-        if item_id not in result:
-            result.append(item_id)
+
+        if value not in result:
+            result.append(value)
+
     return result
 
 
 def _validated_project(data):
-    if not isinstance(data.get("nombre"), str) or not data["nombre"].strip():
+    if not isinstance(data, dict):
+        return None, "datos_invalidos"
+
+    allowed = {
+        "nombre", "descripcion", "etapa",
+        "lenguajes", "tecnologias", "links",
+        "fecha_deadline", "fecha_finalizacion",
+    }
+
+    if set(data) - allowed:
+        return None, "campos_no_permitidos"
+
+    # Validación del nombre
+    name = data.get("nombre")
+
+    if not isinstance(name, str):
         return None, "nombre_invalido"
-    if len(data["nombre"].strip()) > 160:
+
+    name = name.strip()
+
+    if not name or not valid_text(name, max_chars=160):
         return None, "nombre_invalido"
-    if data.get("descripcion") is not None and not isinstance(data.get("descripcion"), str):
+
+    # Validación de descripción
+    description = data.get("descripcion")
+
+    if description is not None and not valid_text(
+        description, max_bytes=65535
+    ):
         return None, "descripcion_invalida"
-    if data.get("etapa") not in ETAPAS:
+
+    # Validación de etapas
+    stage = data.get("etapa")
+
+    if not isinstance(stage, str) or stage not in ETAPAS:
         return None, "etapa_invalida"
 
-    catalog = get_catalog()
-    languages = _id_list(data, "lenguajes", catalog.lenguajes_por_id)
-    technologies = _id_list(data, "tecnologias", catalog.tecnologias_por_id)
+    # Validación de links
     links = data.get("links", [])
 
-    # Rechazar listas incorrectas o IDs ajenos al catálogo.
-    if languages is None or technologies is None or not isinstance(links, list):
+    if not isinstance(links, list):
+        return None, "links_invalidos"
+
+    clean_links = []
+
+    for link in links:
+        if not isinstance(link, dict):
+            return None, "links_invalidos"
+
+        kind = link.get("tipo")
+        url = link.get("url")
+
+        if not isinstance(kind, str) or kind not in TIPOS_LINK:
+            return None, "links_invalidos"
+
+        if not isinstance(url, str):
+            return None, "links_invalidos"
+
+        url = url.strip()
+
+        if not url or not valid_text(url, max_chars=500):
+            return None, "links_invalidos"
+
+        clean_links.append({
+            "tipo": kind,
+            "url": url
+        })
+
+    # Validación de fechas
+    dates = {}
+
+    for key in ("fecha_deadline", "fecha_finalizacion"):
+        value = data.get(key)
+
+        if value is None or value == "":
+            dates[key] = None
+            continue
+
+        if not isinstance(value, str):
+            return None, "fecha_invalida"
+
+        try:
+            parsed = date.fromisoformat(value)
+        except ValueError:
+            return None, "fecha_invalida"
+
+        if parsed.isoformat() != value or parsed.year < 1000:
+            return None, "fecha_invalida"
+
+        dates[key] = value
+
+    # Validación de habilidades
+    catalog = get_catalog()
+
+    languages = _id_list(
+        data, "lenguajes", catalog.lenguajes_por_id
+    )
+    technologies = _id_list(
+        data, "tecnologias", catalog.tecnologias_por_id
+    )
+
+    if languages is None or technologies is None:
         return None, "relaciones_invalidas"
 
-    # Exigir al menos un elemento de cada catálogo.
     if not languages:
         return None, "lenguajes_requeridos"
 
     if not technologies:
         return None, "tecnologias_requeridas"
 
-    clean_links = []
-    for link in links:
-        if not isinstance(link, dict):
-            return None, "links_invalidos"
-        kind, url = link.get("tipo"), link.get("url")
-        if kind not in TIPOS_LINK or not isinstance(url, str) or not url.strip() or len(url.strip()) > 500:
-            return None, "links_invalidos"
-        clean_links.append({"tipo": kind, "url": url.strip()})
-
-    project = {
-        "nombre": data["nombre"].strip(),
-        "descripcion": data.get("descripcion"),
-        "etapa": data["etapa"],
-        "fecha_deadline": data.get("fecha_deadline") or None,
-        "fecha_finalizacion": data.get("fecha_finalizacion") or None,
+    return {
+        "nombre": name.strip(),
+        "descripcion": description,
+        "etapa": stage,
         "lenguajes": languages,
         "tecnologias": technologies,
         "links": clean_links,
-    }
-    for key in ("fecha_deadline", "fecha_finalizacion"):
-        value = project[key]
-        if value is not None:
-            try:
-                date.fromisoformat(value)
-            except (TypeError, ValueError):
-                return None, "fecha_invalida"
-    return project, None
+        "fecha_deadline": dates["fecha_deadline"],
+        "fecha_finalizacion": dates["fecha_finalizacion"],
+    }, None
 
 
 def _project_ids(cursor, project_id, table, column):
@@ -193,6 +257,8 @@ def create_project():
 @projects_bp.put("/<int:project_id>")
 @auth_required
 def update_project(project_id):
+    if not valid_id(project_id):
+        return jsonify({"error": "id_invalido"}), 400
     project, error = _validated_project(json_object())
     if error:
         return jsonify({"error": error}), 400
@@ -227,6 +293,8 @@ def update_project(project_id):
 @projects_bp.delete("/<int:project_id>")
 @auth_required
 def delete_project(project_id):
+    if not valid_id(project_id):
+        return jsonify({"error": "id_invalido"}), 400
     with Cursor(commit=True) as cursor:
         cursor.execute("DELETE FROM proyectos WHERE id = %s AND usuario_id = %s", (project_id, g.user_id))
         deleted = cursor.rowcount
