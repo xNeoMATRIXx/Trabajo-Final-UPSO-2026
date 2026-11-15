@@ -35,9 +35,10 @@ CREATE TABLE usuarios (
 -- ---------------------------------------------------------------------
 CREATE TABLE habilidades (
   usuario_id     INT NOT NULL,
-  tecnologia_id  INT NOT NULL,
+  tipo           ENUM('lenguaje', 'tecnologia') NOT NULL DEFAULT 'tecnologia',
+  elemento_id    INT NOT NULL,
   nivel          ENUM('basico', 'intermedio', 'avanzado') NOT NULL,
-  PRIMARY KEY (usuario_id, tecnologia_id),
+  PRIMARY KEY (usuario_id, tipo, elemento_id),
   CONSTRAINT fk_habilidades_usuario FOREIGN KEY (usuario_id)
     REFERENCES usuarios(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
