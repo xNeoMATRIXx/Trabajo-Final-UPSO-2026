@@ -1,0 +1,7 @@
+opencollection: 1.0.0
+info:
+  name: Portfolio UPSO - pruebas REST
+docs:
+  type: text/markdown
+  content: |-
+    Colección para el backend Flask del portfolio. Ejecutar completa, en orden y en modo secuencial. Ver LEEME.md antes de ejecutar.

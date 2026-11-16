@@ -1,0 +1,25 @@
+info:
+  name: 019 Perfil con token invalido
+  type: http
+  seq: 19
+http:
+  method: GET
+  url: '{{base_url}}/auth/me'
+  headers:
+  - name: Accept
+    value: application/json
+  - name: Authorization
+    value: Bearer {{token_invalido}}
+runtime:
+  scripts:
+  - type: before-request
+    code: |-
+      bru.setVar("token_invalido", "esto-no-es-un-jwt");
+  - type: tests
+    code: |-
+      test("HTTP 401", () => { expect(res.getStatus()).to.equal(401); });
+      test("Respuesta JSON", () => { expect(String(res.getHeader("content-type"))).to.include("application/json"); });
+      test("Código de error presente", () => { expect(typeof res.getBody().error).to.equal("string"); });
+      test("Error esperado", () => { expect(res.getBody().error).to.equal("token_invalid"); });
+settings:
+  encodeUrl: true

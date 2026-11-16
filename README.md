@@ -43,12 +43,3 @@ Proyecto Final Grupal de Proyecto Informático (UPSO). La aplicación busca reun
 
    Por defecto, Flask escucha en el puerto `5000`.
 5. Servir `frontend/` con un servidor web local y abrir la aplicación en el navegador.
-
-## Próximos puntos a revisar
-
-Tomando los checklists adjuntos como referencia informativa, conviene priorizar la integración de los catálogos con la API del profesor (incluidos su mecanismo de acceso y el manejo de errores), el soporte de lenguajes en las habilidades, las validaciones requeridas para los proyectos y la edición del perfil propio. También se deben verificar los entregables complementarios, como datos de prueba, diagramas UML y colección de pruebas de Bruno, contra la consigna vigente.
-
-## Historial
-
-- Primer commit del repositorio: **14 de noviembre de 2026** (`b1607c6`).
-- En el backend el archivo env.txt debe ser renombrado a .env

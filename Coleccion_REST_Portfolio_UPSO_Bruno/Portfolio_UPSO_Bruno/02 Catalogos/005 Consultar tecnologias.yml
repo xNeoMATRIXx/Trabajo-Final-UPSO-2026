@@ -1,0 +1,34 @@
+info:
+  name: 005 Consultar tecnologias
+  type: http
+  seq: 5
+http:
+  method: GET
+  url: '{{base_url}}/tecnologias'
+  headers:
+  - name: Accept
+    value: application/json
+runtime:
+  scripts:
+  - type: tests
+    code: |-
+      test("HTTP 200", () => { expect(res.getStatus()).to.equal(200); });
+      test("Respuesta JSON", () => { expect(String(res.getHeader("content-type"))).to.include("application/json"); });
+      test("Hay al menos dos opciones para la demostración", () => {
+        const items = res.getBody();
+        expect(Array.isArray(items)).to.equal(true);
+        expect(items.length >= 2).to.equal(true);
+        expect(items.every(x => Number.isInteger(x.id) && x.id > 0 && typeof x.nombre === "string")).to.equal(true);
+      });
+      test("Categorías disponibles", () => { expect(res.getBody().every(x => typeof x.categoria === "string" && x.categoria.length > 0)).to.equal(true); });
+      if (res.getStatus() === 200 && Array.isArray(res.getBody()) && res.getBody().length >= 2) {
+        const items = res.getBody();
+        bru.setVar("tech1", items[0].id);
+        bru.setVar("tech2", items[1].id);
+        const used = new Set(items.map(x => x.id));
+        let missing = 1;
+        while (used.has(missing)) missing++;
+        bru.setVar("unknown_tech", missing);
+      }
+settings:
+  encodeUrl: true

@@ -1,0 +1,21 @@
+info:
+  name: 029 Verificar que B no cambio
+  type: http
+  seq: 29
+http:
+  method: GET
+  url: '{{base_url}}/auth/me'
+  headers:
+  - name: Accept
+    value: application/json
+  - name: Authorization
+    value: Bearer {{token_b}}
+runtime:
+  scripts:
+  - type: tests
+    code: |-
+      test("HTTP 200", () => { expect(res.getStatus()).to.equal(200); });
+      test("Respuesta JSON", () => { expect(String(res.getHeader("content-type"))).to.include("application/json"); });
+      test("Perfil B intacto", () => { const u = res.getBody().user; expect(u.id).to.equal(Number(bru.getVar("user_b"))); expect(u.nombre).to.equal(bru.getVar("nombre_b")); expect(u.email).to.equal(bru.getVar("email_b")); });
+settings:
+  encodeUrl: true

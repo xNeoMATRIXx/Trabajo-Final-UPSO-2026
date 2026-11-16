@@ -1,0 +1,29 @@
+info:
+  name: 012 Rechazar email duplicado
+  type: http
+  seq: 12
+http:
+  method: POST
+  url: '{{base_url}}/auth/register'
+  headers:
+  - name: Accept
+    value: application/json
+  - name: Content-Type
+    value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "email": "{{email_a}}",
+        "username": "qa_dup_{{run_id}}",
+        "password": "{{password}}"
+      }
+runtime:
+  scripts:
+  - type: tests
+    code: |-
+      test("HTTP 409", () => { expect(res.getStatus()).to.equal(409); });
+      test("Respuesta JSON", () => { expect(String(res.getHeader("content-type"))).to.include("application/json"); });
+      test("Código de error presente", () => { expect(typeof res.getBody().error).to.equal("string"); });
+settings:
+  encodeUrl: true

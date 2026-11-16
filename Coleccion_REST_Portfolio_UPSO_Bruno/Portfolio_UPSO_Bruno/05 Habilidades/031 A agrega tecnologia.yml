@@ -1,0 +1,30 @@
+info:
+  name: 031 A agrega tecnologia
+  type: http
+  seq: 31
+http:
+  method: POST
+  url: '{{base_url}}/habilidades'
+  headers:
+  - name: Accept
+    value: application/json
+  - name: Content-Type
+    value: application/json
+  - name: Authorization
+    value: Bearer {{token_a}}
+  body:
+    type: json
+    data: |-
+      {
+        "tipo": "tecnologia",
+        "elemento_id": {{tech1}},
+        "nivel": "intermedio"
+      }
+runtime:
+  scripts:
+  - type: tests
+    code: |-
+      test("HTTP 201", () => { expect(res.getStatus()).to.equal(201); });
+      test("Respuesta JSON", () => { expect(String(res.getHeader("content-type"))).to.include("application/json"); });
+settings:
+  encodeUrl: true

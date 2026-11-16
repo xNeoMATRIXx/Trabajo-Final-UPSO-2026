@@ -1,0 +1,29 @@
+info:
+  name: 037 B no puede editar habilidad de A
+  type: http
+  seq: 37
+http:
+  method: PUT
+  url: '{{base_url}}/habilidades/lenguaje/{{lang1}}'
+  headers:
+  - name: Accept
+    value: application/json
+  - name: Content-Type
+    value: application/json
+  - name: Authorization
+    value: Bearer {{token_b}}
+  body:
+    type: json
+    data: |-
+      {
+        "nivel": "basico"
+      }
+runtime:
+  scripts:
+  - type: tests
+    code: |-
+      test("HTTP 404", () => { expect(res.getStatus()).to.equal(404); });
+      test("Respuesta JSON", () => { expect(String(res.getHeader("content-type"))).to.include("application/json"); });
+      test("Código de error presente", () => { expect(typeof res.getBody().error).to.equal("string"); });
+settings:
+  encodeUrl: true

@@ -1,0 +1,45 @@
+info:
+  name: 051 Crear proyecto B
+  type: http
+  seq: 51
+http:
+  method: POST
+  url: '{{base_url}}/proyectos'
+  headers:
+  - name: Accept
+    value: application/json
+  - name: Content-Type
+    value: application/json
+  - name: Authorization
+    value: Bearer {{token_b}}
+  body:
+    type: json
+    data: |-
+      {
+        "nombre": "Proyecto B {{run_id}}",
+        "descripcion": "Proyecto de prueba con varias relaciones",
+        "etapa": "implementacion",
+        "fecha_deadline": "2030-12-31",
+        "fecha_finalizacion": null,
+        "lenguajes": [
+          {{lang1}}
+        ],
+        "tecnologias": [
+          {{tech2}}
+        ],
+        "links": [
+          {
+            "tipo": "demo",
+            "url": "https://example.com/b"
+          }
+        ]
+      }
+runtime:
+  scripts:
+  - type: tests
+    code: |-
+      test("HTTP 201", () => { expect(res.getStatus()).to.equal(201); });
+      test("Respuesta JSON", () => { expect(String(res.getHeader("content-type"))).to.include("application/json"); });
+      if (res.getStatus() === 201) bru.setVar("project_b", res.getBody().id);
+settings:
+  encodeUrl: true

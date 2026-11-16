@@ -1,0 +1,66 @@
+info:
+  name: 050 Crear proyecto completo A
+  type: http
+  seq: 50
+http:
+  method: POST
+  url: '{{base_url}}/proyectos'
+  headers:
+  - name: Accept
+    value: application/json
+  - name: Content-Type
+    value: application/json
+  - name: Authorization
+    value: Bearer {{token_a}}
+  body:
+    type: json
+    data: |-
+      {
+        "nombre": "Proyecto A {{run_id}}",
+        "descripcion": "Proyecto de prueba con varias relaciones",
+        "etapa": "implementacion",
+        "fecha_deadline": "2030-12-31",
+        "fecha_finalizacion": null,
+        "lenguajes": [
+          {{lang1}},
+          {{lang2}}
+        ],
+        "tecnologias": [
+          {{tech1}},
+          {{tech2}}
+        ],
+        "links": [
+          {
+            "tipo": "repositorio",
+            "url": "https://example.com/repo-a"
+          },
+          {
+            "tipo": "repositorio",
+            "url": "https://example.com/repo-b"
+          },
+          {
+            "tipo": "demo",
+            "url": "https://example.com/demo"
+          }
+        ]
+      }
+runtime:
+  scripts:
+  - type: tests
+    code: |-
+      test("HTTP 201", () => { expect(res.getStatus()).to.equal(201); });
+      test("Respuesta JSON", () => { expect(String(res.getHeader("content-type"))).to.include("application/json"); });
+      test("Varias relaciones y links del mismo tipo", () => { const p=res.getBody(); expect(Number.isInteger(p.id)).to.equal(true); expect(p.lenguajes.length).to.equal(2); expect(p.tecnologias.length).to.equal(2); expect(p.links.length).to.equal(3); expect(p.links.filter(x=>x.tipo==="repositorio").length).to.equal(2); expect(typeof p.fecha_creacion).to.equal("string"); });
+      if (res.getStatus() === 201) bru.setVar("project_a", res.getBody().id);
+      if (res.getStatus() === 200 || res.getStatus() === 201) {
+        const p = res.getBody();
+        bru.setVar("project_payload_a", JSON.stringify({
+          nombre:p.nombre, descripcion:p.descripcion, etapa:p.etapa,
+          fecha_deadline:p.fecha_deadline, fecha_finalizacion:p.fecha_finalizacion,
+          lenguajes:p.lenguajes.map(x=>x.id), tecnologias:p.tecnologias.map(x=>x.id),
+          links:p.links.map(x=>({tipo:x.tipo,url:x.url}))
+        }));
+        bru.setVar("project_updated_a", p.fecha_actualizacion);
+      }
+settings:
+  encodeUrl: true

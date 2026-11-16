@@ -1,0 +1,34 @@
+info:
+  name: 001 Estado e iniciar datos de prueba
+  type: http
+  seq: 1
+http:
+  method: GET
+  url: '{{base_url}}/'
+  headers:
+  - name: Accept
+    value: application/json
+runtime:
+  scripts:
+  - type: before-request
+    code: |-
+      const run = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      bru.setVar("run_id", run);
+      bru.setVar("password", "PruebaUPSO2026!");
+      for (const who of ["a", "b"]) {
+        bru.setVar("email_" + who, "qa." + who + "." + run + "@example.com");
+        bru.setVar("username_" + who, "qa_" + who + "_" + run);
+        bru.setVar("token_" + who, "");
+        bru.setVar("user_" + who, 0);
+        bru.setVar("project_" + who, 0);
+      }
+      bru.setVar("initial_email_a", bru.getVar("email_a"));
+      bru.setVar("nombre_a", "Usuario A de prueba");
+      bru.setVar("nombre_b", "Usuario B de prueba");
+  - type: tests
+    code: |-
+      test("HTTP 200", () => { expect(res.getStatus()).to.equal(200); });
+      test("Respuesta JSON", () => { expect(String(res.getHeader("content-type"))).to.include("application/json"); });
+      test("API disponible", () => { expect(res.getBody().status).to.equal("ok"); });
+settings:
+  encodeUrl: true

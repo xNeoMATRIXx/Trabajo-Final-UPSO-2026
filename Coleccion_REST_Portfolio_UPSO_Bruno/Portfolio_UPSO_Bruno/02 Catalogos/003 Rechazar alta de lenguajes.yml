@@ -1,0 +1,27 @@
+info:
+  name: 003 Rechazar alta de lenguajes
+  type: http
+  seq: 3
+http:
+  method: POST
+  url: '{{base_url}}/lenguajes'
+  headers:
+  - name: Accept
+    value: application/json
+  - name: Content-Type
+    value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "nombre": "Inventado"
+      }
+runtime:
+  scripts:
+  - type: tests
+    code: |-
+      test("HTTP 405", () => { expect(res.getStatus()).to.equal(405); });
+      test("Respuesta JSON", () => { expect(String(res.getHeader("content-type"))).to.include("application/json"); });
+      test("Código de error presente", () => { expect(typeof res.getBody().error).to.equal("string"); });
+settings:
+  encodeUrl: true

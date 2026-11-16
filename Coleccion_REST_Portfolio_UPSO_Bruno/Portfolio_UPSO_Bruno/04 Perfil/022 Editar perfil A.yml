@@ -1,0 +1,36 @@
+info:
+  name: 022 Editar perfil A
+  type: http
+  seq: 22
+http:
+  method: PUT
+  url: '{{base_url}}/auth/me'
+  headers:
+  - name: Accept
+    value: application/json
+  - name: Content-Type
+    value: application/json
+  - name: Authorization
+    value: Bearer {{token_a}}
+  body:
+    type: json
+    data: |-
+      {
+        "email": "qa.a2.{{run_id}}@example.com",
+        "username": "qa_a2_{{run_id}}",
+        "nombre": "Perfil A actualizado",
+        "bio": "Biografía actualizada desde Bruno"
+      }
+runtime:
+  scripts:
+  - type: tests
+    code: |-
+      test("HTTP 200", () => { expect(res.getStatus()).to.equal(200); });
+      test("Respuesta JSON", () => { expect(String(res.getHeader("content-type"))).to.include("application/json"); });
+      test("Propietario conservado", () => { expect(res.getBody().user.id).to.equal(Number(bru.getVar("user_a"))); expect(res.getBody().user.nombre).to.equal("Perfil A actualizado"); });
+      if (res.getStatus() === 200) {
+        const u = res.getBody().user;
+        bru.setVar("email_a", u.email); bru.setVar("username_a", u.username); bru.setVar("nombre_a", u.nombre);
+      }
+settings:
+  encodeUrl: true

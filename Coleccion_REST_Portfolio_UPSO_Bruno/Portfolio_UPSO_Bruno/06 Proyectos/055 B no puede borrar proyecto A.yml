@@ -1,0 +1,21 @@
+info:
+  name: 055 B no puede borrar proyecto A
+  type: http
+  seq: 55
+http:
+  method: DELETE
+  url: '{{base_url}}/proyectos/{{project_a}}'
+  headers:
+  - name: Accept
+    value: application/json
+  - name: Authorization
+    value: Bearer {{token_b}}
+runtime:
+  scripts:
+  - type: tests
+    code: |-
+      test("HTTP 404", () => { expect(res.getStatus()).to.equal(404); });
+      test("Respuesta JSON", () => { expect(String(res.getHeader("content-type"))).to.include("application/json"); });
+      test("Código de error presente", () => { expect(typeof res.getBody().error).to.equal("string"); });
+settings:
+  encodeUrl: true

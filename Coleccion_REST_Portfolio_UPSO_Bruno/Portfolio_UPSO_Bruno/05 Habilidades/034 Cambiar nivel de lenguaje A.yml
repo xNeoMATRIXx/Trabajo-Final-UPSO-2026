@@ -1,0 +1,29 @@
+info:
+  name: 034 Cambiar nivel de lenguaje A
+  type: http
+  seq: 34
+http:
+  method: PUT
+  url: '{{base_url}}/habilidades/lenguaje/{{lang1}}'
+  headers:
+  - name: Accept
+    value: application/json
+  - name: Content-Type
+    value: application/json
+  - name: Authorization
+    value: Bearer {{token_a}}
+  body:
+    type: json
+    data: |-
+      {
+        "nivel": "intermedio"
+      }
+runtime:
+  scripts:
+  - type: tests
+    code: |-
+      test("HTTP 200", () => { expect(res.getStatus()).to.equal(200); });
+      test("Respuesta JSON", () => { expect(String(res.getHeader("content-type"))).to.include("application/json"); });
+      test("Nivel actualizado", () => { expect(res.getBody().nivel).to.equal("intermedio"); });
+settings:
+  encodeUrl: true

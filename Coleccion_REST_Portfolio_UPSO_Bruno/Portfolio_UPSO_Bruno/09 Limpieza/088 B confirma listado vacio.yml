@@ -1,0 +1,27 @@
+info:
+  name: 088 B confirma listado vacio
+  type: http
+  seq: 88
+http:
+  method: GET
+  url: '{{base_url}}/proyectos'
+  headers:
+  - name: Accept
+    value: application/json
+  - name: Authorization
+    value: Bearer {{token_b}}
+runtime:
+  scripts:
+  - type: before-request
+    code: |-
+      if (String(bru.getEnvVar("limpiar_al_final")).toLowerCase() !== "true") {
+        console.warn("OMITIDA limpieza: se conservan las cuentas y portfolios QA de esta ejecución.");
+        bru.runner.skipRequest();
+      }
+  - type: tests
+    code: |-
+      test("HTTP 200", () => { expect(res.getStatus()).to.equal(200); });
+      test("Respuesta JSON", () => { expect(String(res.getHeader("content-type"))).to.include("application/json"); });
+      test("Proyecto B eliminado", () => { expect(res.getBody().length).to.equal(0); });
+settings:
+  encodeUrl: true

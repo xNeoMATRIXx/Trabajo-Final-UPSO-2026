@@ -1,0 +1,83 @@
+@startuml
+hide methods
+hide circle
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName DejaVu Sans
+skinparam defaultFontSize 12
+skinparam dpi 200
+skinparam nodesep 55
+skinparam ranksep 65
+skinparam class {
+  BackgroundColor white
+  HeaderBackgroundColor #EFF5F9
+  BorderColor #22628C
+  FontColor #152D47
+  AttributeFontColor #23384A
+}
+skinparam ArrowColor #22628C
+skinparam note {
+  BackgroundColor #F4F8FA
+  BorderColor #BCD0DF
+  FontSize 12
+}
+skinparam legend {
+  BackgroundColor #F4F8FA
+  BorderColor #BCD0DF
+  FontSize 12
+}
+title Portfolio UPSO - Tablas y relaciones físicas
+class "usuarios" as usuarios {
+  {field} id : INT {PK, AI}
+  {field} email : VARCHAR(190) {UQ}
+  {field} username : VARCHAR(30) {UQ}
+  {field} password_hash : VARCHAR(255)
+  {field} nombre : VARCHAR(120) [0..1]
+  {field} bio : TEXT [0..1]
+  {field} created_at : TIMESTAMP [0..1]
+}
+class "habilidades" as habilidades {
+  {field} usuario_id : INT {PK, FK}
+  {field} tipo : TipoHabilidad {PK}
+  {field} elemento_id : INT {PK}
+  {field} nivel : NivelDominio
+}
+class "proyectos" as proyectos {
+  {field} id : INT {PK, AI}
+  {field} usuario_id : INT {FK}
+  {field} nombre : VARCHAR(160)
+  {field} descripcion : TEXT [0..1]
+  {field} etapa : EtapaProyecto
+  {field} fecha_creacion : TIMESTAMP [0..1]
+  {field} fecha_actualizacion : TIMESTAMP [0..1]
+  {field} fecha_finalizacion : DATE [0..1]
+  {field} fecha_deadline : DATE [0..1]
+}
+class "proyecto_links" as proyecto_links {
+  {field} id : INT {PK, AI}
+  {field} proyecto_id : INT {FK}
+  {field} tipo : TipoLink
+  {field} url : VARCHAR(500)
+}
+class "proyecto_lenguaje" as proyecto_lenguaje {
+  {field} proyecto_id : INT {PK, FK}
+  {field} lenguaje_id : INT {PK}
+}
+class "proyecto_tecnologia" as proyecto_tecnologia {
+  {field} proyecto_id : INT {PK, FK}
+  {field} tecnologia_id : INT {PK}
+}
+usuarios "1" -down- "0..*" habilidades
+usuarios "1" -right- "0..*" proyectos
+proyectos "1" -right- "0..*" proyecto_links
+proyectos "1" -down- "0..*" proyecto_lenguaje
+proyectos "1" -down- "0..*" proyecto_tecnologia
+habilidades -[hidden]right- proyecto_lenguaje
+proyecto_lenguaje -[hidden]right- proyecto_tecnologia
+legend bottom
+  PK: clave primaria | FK: clave foránea | UQ: único | AI: autoincremental
+  [0..1]: campo que admite NULL. Las cinco FK usan ON DELETE CASCADE.
+  elemento_id, lenguaje_id y tecnologia_id son referencias externas, no FK SQL.
+endlegend
+@enduml

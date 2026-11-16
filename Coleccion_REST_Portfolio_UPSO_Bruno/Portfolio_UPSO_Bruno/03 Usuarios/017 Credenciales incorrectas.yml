@@ -1,0 +1,28 @@
+info:
+  name: 017 Credenciales incorrectas
+  type: http
+  seq: 17
+http:
+  method: POST
+  url: '{{base_url}}/auth/login'
+  headers:
+  - name: Accept
+    value: application/json
+  - name: Content-Type
+    value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "email": "{{email_a}}",
+        "password": "Incorrecta123!"
+      }
+runtime:
+  scripts:
+  - type: tests
+    code: |-
+      test("HTTP 401", () => { expect(res.getStatus()).to.equal(401); });
+      test("Respuesta JSON", () => { expect(String(res.getHeader("content-type"))).to.include("application/json"); });
+      test("Código de error presente", () => { expect(typeof res.getBody().error).to.equal("string"); });
+settings:
+  encodeUrl: true

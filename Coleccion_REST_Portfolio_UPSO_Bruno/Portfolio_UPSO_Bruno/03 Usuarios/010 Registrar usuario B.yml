@@ -1,0 +1,35 @@
+info:
+  name: 010 Registrar usuario B
+  type: http
+  seq: 10
+http:
+  method: POST
+  url: '{{base_url}}/auth/register'
+  headers:
+  - name: Accept
+    value: application/json
+  - name: Content-Type
+    value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "email": "{{email_b}}",
+        "username": "{{username_b}}",
+        "password": "{{password}}",
+        "nombre": "{{nombre_b}}",
+        "bio": "Perfil de prueba de la colección REST"
+      }
+runtime:
+  scripts:
+  - type: tests
+    code: |-
+      test("HTTP 201", () => { expect(res.getStatus()).to.equal(201); });
+      test("Respuesta JSON", () => { expect(String(res.getHeader("content-type"))).to.include("application/json"); });
+      test("Usuario y token", () => { const d = res.getBody(); expect(typeof d.token).to.equal("string"); expect(Number.isInteger(d.user.id)).to.equal(true); expect(d.user).not.to.have.property("password_hash"); });
+      if (res.getStatus() === 201 && res.getBody().token) {
+        bru.setVar("token_b", res.getBody().token);
+        bru.setVar("user_b", res.getBody().user.id);
+      }
+settings:
+  encodeUrl: true
