@@ -406,12 +406,36 @@ Las fechas que representan solo un día deben conservar ese día al mostrarse en
 
 Durante el guardado de un proyecto, el cambio preparado deshabilita el botón, muestra el estado de procesamiento y restaura el control mediante `finally`. Deben comprobarse tanto el caso correcto como el error de red y la validación fallida.
 
-## 11. Estrategia y resultados de prueba
-
-### 11.1. Colección REST Bruno
+## 11. Colección REST Bruno
 
 La colección se organiza en nueve grupos: preparación, catálogos, usuarios, perfil, habilidades, proyectos, validaciones, acceso público y limpieza. Debe ejecutarse completa, en orden y de forma secuencial, porque varias peticiones utilizan resultados anteriores.
 
 El entorno `Local` contiene configuración estable como `base_url`, `limpiar_al_final` y el token vencido de prueba opcional. Los emails, usernames, tokens e IDs generados durante la corrida son variables de ejecución creadas con scripts; no se mantienen como valores fijos del entorno.
 
 Por defecto se eliminan las dos cuentas creadas al finalizar. Para conservar los datos de demostración se configura `limpiar_al_final=false`. Si no se prepara un token auténticamente vencido con la configuración del backend, ese caso se omite y no se considera validado.
+
+## 12. Uso de IA
+
+- Problema: No teníamos acceso a la API
+- IA utilizada: ChatGPT
+- Uso de la respuesta: Se crearon datos para un mock de la api
+----
+
+- Problema: Queríamos mejorar las validaciones del backend
+- IA utilizada: ChatGPT
+- Uso de la respuesta: Se preguntó por estrategias para mejorar y el agente sugirió utilizar BadRequest de werkzeug.exceptions. Se adaptaron los ejemplos al caso.
+----
+
+- Problema: Determinar la matriz de prueba y cubrir todos los casos posibles
+- IA utilizada: ChatGPT
+- Uso de la respuesta: Se generó un documento con la lista de pruebas a realizar, en base a la cual se armó la colección REST.
+----
+
+- Problema: Necesitamos probar el caso de un token vencido
+- IA utilizada: ChatGPT
+- Uso de la respuesta: El agente generó un archivo .py que se puede correr para simular un token vencido al hacer las pruebas con Bruno.
+---
+
+- Problema: Completar la documentación
+- IA utilizada: ChatGPT
+- Uso de la respuesta: Se verificaron algunas secciones y requerimientos para agregar a la documentación y presentarla de forma más completa.
