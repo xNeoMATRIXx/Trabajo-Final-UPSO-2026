@@ -1,0 +1,16 @@
+# Agregar estas lineas al .env existente, conservando MySQL y JWT.
+# PRUEBA DIRECTA CON JSON LOCAL (valor predeterminado):
+CATALOGO_MODO=mock
+CATALOGO_CACHE_SEGUNDOS=300
+CATALOGO_TIMEOUT_SEGUNDOS=5
+
+# PARA PROBAR LA INTEGRACION HTTP LOCAL:
+# Abrir INICIAR_CATALOGO_MOCK.bat y cambiar la linea de modo anterior a http.
+# CATALOGO_MODO=http
+# CATALOGO_API_URL=http://127.0.0.1:5001
+# CATALOGO_LENGUAJES_PATH=/lenguajes
+# CATALOGO_TECNOLOGIAS_PATH=/tecnologias
+# CATALOGO_API_TOKEN=
+
+# Reiniciar el backend despues de modificar .env.
+# Estas rutas y el contrato son provisionales, no los del profesor.
