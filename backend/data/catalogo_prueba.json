@@ -1,0 +1,133 @@
+{
+  "lenguajes": [
+    {
+      "id": 1,
+      "nombre": "Python"
+    },
+    {
+      "id": 2,
+      "nombre": "JavaScript"
+    },
+    {
+      "id": 3,
+      "nombre": "TypeScript"
+    },
+    {
+      "id": 4,
+      "nombre": "Java"
+    },
+    {
+      "id": 5,
+      "nombre": "C#"
+    },
+    {
+      "id": 6,
+      "nombre": "C++"
+    },
+    {
+      "id": 7,
+      "nombre": "PHP"
+    },
+    {
+      "id": 8,
+      "nombre": "Go"
+    },
+    {
+      "id": 9,
+      "nombre": "Ruby"
+    },
+    {
+      "id": 10,
+      "nombre": "Rust"
+    },
+    {
+      "id": 11,
+      "nombre": "SQL"
+    },
+    {
+      "id": 12,
+      "nombre": "HTML"
+    },
+    {
+      "id": 13,
+      "nombre": "CSS"
+    }
+  ],
+  "tecnologias": [
+    {
+      "id": 1,
+      "nombre": "React",
+      "categoria": "framework"
+    },
+    {
+      "id": 2,
+      "nombre": "Vue",
+      "categoria": "framework"
+    },
+    {
+      "id": 3,
+      "nombre": "Angular",
+      "categoria": "framework"
+    },
+    {
+      "id": 4,
+      "nombre": "Node.js",
+      "categoria": "herramienta"
+    },
+    {
+      "id": 5,
+      "nombre": "Express",
+      "categoria": "framework"
+    },
+    {
+      "id": 6,
+      "nombre": "Flask",
+      "categoria": "framework"
+    },
+    {
+      "id": 7,
+      "nombre": "Django",
+      "categoria": "framework"
+    },
+    {
+      "id": 8,
+      "nombre": "Laravel",
+      "categoria": "framework"
+    },
+    {
+      "id": 9,
+      "nombre": ".NET",
+      "categoria": "framework"
+    },
+    {
+      "id": 10,
+      "nombre": "MySQL",
+      "categoria": "base_de_datos"
+    },
+    {
+      "id": 11,
+      "nombre": "PostgreSQL",
+      "categoria": "base_de_datos"
+    },
+    {
+      "id": 12,
+      "nombre": "MongoDB",
+      "categoria": "base_de_datos"
+    },
+    {
+      "id": 13,
+      "nombre": "Docker",
+      "categoria": "herramienta"
+    },
+    {
+      "id": 14,
+      "nombre": "Git",
+      "categoria": "herramienta"
+    },
+    {
+      "id": 15,
+      "nombre": "AWS",
+      "categoria": "herramienta"
+    }
+  ]
+}
