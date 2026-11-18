@@ -1,8 +1,9 @@
-"""Catalogo mock y adaptador HTTP con contrato provisional, no oficial."""
+"""Catálogos mock y HTTP; admite el header Grupo-Access-Key de la API oficial."""
 from dataclasses import dataclass
 import json
 import os
 from pathlib import Path
+import re
 import threading
 import time
 from urllib.error import HTTPError, URLError
@@ -19,12 +20,12 @@ class CatalogError(RuntimeError):
 
 
 def adaptar_lenguajes(payload):
-    """Provisional: lista de {id, nombre}; adaptar aqui la respuesta real."""
+    """Contrato verificado: lista de objetos con id y nombre."""
     return _normalizar(payload, tecnologia=False)
 
 
 def adaptar_tecnologias(payload):
-    """Provisional: lista de {id, nombre, categoria}; adaptar aqui la API real."""
+    """Contrato verificado: lista de objetos con id, nombre y categoria."""
     return _normalizar(payload, tecnologia=True)
 
 
@@ -44,7 +45,7 @@ def _normalizar(payload, tecnologia):
         if tecnologia:
             category = item.get("categoria")
             if not isinstance(category, str) or not category.strip():
-                raise CatalogError("Falta adaptar o informar la categoria de una tecnologia.")
+                raise CatalogError("La fuente no informa una categoria valida para la tecnologia.")
             clean["categoria"] = category.strip()
         seen.add(item_id)
         result.append(clean)
@@ -80,16 +81,24 @@ class CatalogSnapshot:
 class CatalogService:
     def __init__(self, mode="mock", base_url="", ttl=300, timeout=5,
                  languages_path="/lenguajes", technologies_path="/tecnologias",
-                 token="", mock_file=None):
+                 token="", mock_file=None, auth_header="Authorization",
+                 auth_prefix="Bearer"):
         if mode not in {"mock", "http"}:
             raise CatalogError("CATALOGO_MODO debe ser mock o http.")
         if mode == "http" and urlparse(base_url).scheme not in {"http", "https"}:
             raise CatalogError("Configura CATALOGO_API_URL con una URL HTTP o HTTPS.")
         if ttl < 0 or timeout <= 0:
             raise CatalogError("El TTL debe ser no negativo y el timeout positivo.")
+        if not isinstance(auth_header, str) or not re.fullmatch(r"[A-Za-z0-9-]+", auth_header):
+            raise CatalogError("CATALOGO_API_HEADER debe ser un nombre de header valido.")
+        if not isinstance(token, str) or not isinstance(auth_prefix, str):
+            raise CatalogError("La autenticacion del catalogo debe configurarse como texto.")
+        if any(char in token + auth_prefix for char in "\r\n"):
+            raise CatalogError("La configuracion de autenticacion del catalogo contiene saltos de linea.")
         self.mode, self.base_url = mode, base_url.rstrip("/")
         self.ttl, self.timeout, self.token = ttl, timeout, token
         self.languages_path, self.technologies_path = languages_path, technologies_path
+        self.auth_header, self.auth_prefix = auth_header, auth_prefix.strip()
         self.mock_file = Path(mock_file) if mock_file else ROOT / "data/catalogo_prueba.json"
         self._snapshot, self._expires = None, 0
         self._lock = threading.Lock()
@@ -105,6 +114,8 @@ class CatalogService:
                 languages_path=os.environ.get("CATALOGO_LENGUAJES_PATH", "/lenguajes"),
                 technologies_path=os.environ.get("CATALOGO_TECNOLOGIAS_PATH", "/tecnologias"),
                 token=os.environ.get("CATALOGO_API_TOKEN", ""),
+                auth_header=os.environ.get("CATALOGO_API_HEADER", "Authorization").strip(),
+                auth_prefix=os.environ.get("CATALOGO_API_PREFIX", "Bearer"),
             )
         except ValueError as exc:
             raise CatalogError("La configuracion numerica del catalogo es invalida.") from exc
@@ -112,7 +123,8 @@ class CatalogService:
     def _http(self, path):
         headers = {"Accept": "application/json"}
         if self.token:
-            headers["Authorization"] = "Bearer " + self.token
+            value = self.token if not self.auth_prefix else self.auth_prefix + " " + self.token
+            headers[self.auth_header] = value
         request = Request(self.base_url + "/" + path.lstrip("/"), headers=headers)
         try:
             with urlopen(request, timeout=self.timeout) as response:
@@ -120,7 +132,15 @@ class CatalogService:
             if len(data) > 2_000_000:
                 raise CatalogError("La respuesta del catalogo supera el limite previsto.")
             return json.loads(data.decode("utf-8-sig"))
-        except (HTTPError, URLError, OSError, UnicodeError, ValueError) as exc:
+        except HTTPError as exc:
+            if exc.code in (401, 403):
+                raise CatalogError(
+                    "La API del catalogo rechazo el acceso (HTTP %s). "
+                    "Revisa CATALOGO_API_TOKEN, CATALOGO_API_HEADER y CATALOGO_API_PREFIX."
+                    % exc.code
+                ) from exc
+            raise CatalogError("La API del catalogo respondio HTTP %s." % exc.code) from exc
+        except (URLError, OSError, UnicodeError, ValueError) as exc:
             raise CatalogError("No se pudo obtener un catalogo JSON valido de la fuente HTTP.") from exc
 
     def read(self):
